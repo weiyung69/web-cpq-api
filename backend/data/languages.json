@@ -1,0 +1,32 @@
+{
+  "CAT_PRIVATE": {
+    "en": "Individual Lesson",
+    "jp": "個人レッスン",
+    "th": "เรียนส่วนตัว"
+  },
+  "CAT_WEEKDAY": {
+    "en": "Weekday Special",
+    "jp": "平日限定プラン",
+    "th": "โปรวันธรรมดา"
+  },
+  "CAT_GROUP": {
+    "en": "Group Lesson",
+    "jp": "グループレッスン",
+    "th": "เรียนกลุ่ม"
+  },
+  "SEG_REGULAR": {
+    "en": "Regular Adult",
+    "jp": "一般大人",
+    "th": "ผู้ใหญ่ปกติ"
+  },
+  "SEG_JUNIOR": {
+    "en": "Junior",
+    "jp": "ジュニア",
+    "th": "เด็ก"
+  },
+  "SEG_SENIOR": {
+    "en": "Senior",
+    "jp": "シニア",
+    "th": "ผู้สูงอายุ"
+  }
+}

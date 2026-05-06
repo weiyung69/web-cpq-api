@@ -13,7 +13,11 @@ if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") { exit(http_response_code(200)); }
 $dataDir = __DIR__ . "/data";
 $method  = $_SERVER["REQUEST_METHOD"];
 $type = isset($_GET['type']) ? $_GET['type'] : 'orders';
-$allowedFiles = ['orders', 'cpq']; 
+
+/**
+ * 💡 1. 扩展允许的文件类型：增加 'langs'
+ */
+$allowedFiles = ['orders', 'cpq', 'langs']; 
 
 if (!in_array($type, $allowedFiles)) {
     echo json_encode(["error" => "Invalid type"]);
@@ -22,15 +26,20 @@ if (!in_array($type, $allowedFiles)) {
 
 $dataFile = $dataDir . "/" . $type . ".json";
 if (!is_dir($dataDir)) mkdir($dataDir, 0777, true);
-if (!file_exists($dataFile)) file_put_contents($dataFile, json_encode([]));
 
-// --- 1. 处理 GET ---
+// 初始化文件：如果是 orders 存 [], 如果是 cpq 或 langs 存 {}
+if (!file_exists($dataFile)) {
+    $initial = ($type === 'orders') ? [] : ["_init" => true];
+    file_put_contents($dataFile, json_encode($initial));
+}
+
+// --- 处理 GET ---
 if ($method === "GET") {
     echo file_get_contents($dataFile) ?: json_encode([]);
     exit;
 }
 
-// --- 2. 处理 POST ---
+// --- 处理 POST ---
 if ($method === "POST") {
     $input = json_decode(file_get_contents("php://input"), true);
     if (!$input) {
@@ -38,33 +47,26 @@ if ($method === "POST") {
         exit(http_response_code(400));
     }
 
-    /**
-     * 💡 核心逻辑：智能判断保存模式
-     */
-    if ($type === 'cpq') {
-        // CPQ 永远是 [全量覆盖]
+    if ($type === 'cpq' || $type === 'langs') {
+        /**
+         * 💡 2. 策略与语言包永远执行 [全量覆盖]
+         * 这样 Admin 无论修改了哪个词或哪个价格，直接一键同步全量数据。
+         */
         $finalData = $input;
     } else if ($type === 'orders') {
-        // 判断是 Admin 还是 Frontend
         if (isset($input[0])) {
-            // 情况 A: 传过来的是数组 [{}, {}...] -> 这是 Admin 在更新状态，执行 [全量覆盖]
-            $finalData = $input;
+            $finalData = $input; // Admin 批量更新订单状态
         } else {
-            // 情况 B: 传过来的是对象 {name:...} -> 这是 Frontend 提交新订单，执行 [追加模式]
             $currentData = json_decode(file_get_contents($dataFile), true) ?: [];
-            
-            // 自动补齐后端字段
             $input["server_time"] = date("Y-m-d H:i:s");
-            $input["follow_up"] = false; // 新订单默认未跟进
-            
+            $input["follow_up"] = false; 
             $currentData[] = $input;
             $finalData = $currentData;
         }
     }
 
-    // 执行写入 (LOCK_EX 确保多人在改价或下单时文件不会写坏)
-    if (file_put_contents($dataFile, json_encode($finalData, JSON_PRETTY_PRINT), LOCK_EX)) {
-        echo json_encode(["status" => "success", "mode" => isset($input[0]) ? "overwrite" : "append"]);
+    if (file_put_contents($dataFile, json_encode($finalData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX)) {
+        echo json_encode(["status" => "success", "type" => $type]);
     } else {
         echo json_encode(["error" => "Write failed"]);
         exit(http_response_code(500));
