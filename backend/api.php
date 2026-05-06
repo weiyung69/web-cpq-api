@@ -1,80 +1,75 @@
 <?php
-/**
- * 解决 Azure 环境下的 CORS 问题及文件写入权限
- */
-
-// 1. 禁用错误输出，防止报错信息干扰 Header 发送
 error_reporting(0);
 ini_set('display_errors', 0);
 
-// 2. 设置 CORS 响应头
-// 允许所有来源（测试阶段建议用 *，上线后可改为你的前端域名）
+// --- CORS & Headers ---
 header("Access-Control-Allow-Origin: *");
-// 允许的请求方法
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-// 允许的请求头（添加了 X-Requested-With 等常用头）
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-// 声明返回内容为 JSON
 header("Content-Type: application/json");
 
-// 3. 立即处理浏览器的 OPTIONS 预检请求
-if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
-    http_response_code(200);
-    exit;
-}
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") { exit(http_response_code(200)); }
 
-// 4. 定义数据文件路径
+// --- 基础配置 ---
 $dataDir = __DIR__ . "/data";
-$dataFile = $dataDir . "/orders.json";
+$method  = $_SERVER["REQUEST_METHOD"];
 
-// 5. 自动检查并创建 data 目录
-if (!is_dir($dataDir)) {
-    mkdir($dataDir, 0777, true);
+// 获取请求类型（默认为 orders）
+$type = isset($_GET['type']) ? $_GET['type'] : 'orders';
+
+/**
+ * 💡 以后如果增加新的 JSON 文件（如 products.json）
+ * 只需在下面的数组里加上 'products' 即可
+ */
+$allowedFiles = ['orders', 'cpq']; 
+
+if (!in_array($type, $allowedFiles)) {
+    echo json_encode(["error" => "Invalid type"]);
+    exit(http_response_code(403));
 }
 
-// 6. 初始化 JSON 文件
-if (!file_exists($dataFile)) {
-    file_put_contents($dataFile, json_encode([]));
-}
+$dataFile = $dataDir . "/" . $type . ".json";
 
-$method = $_SERVER["REQUEST_METHOD"];
+// 初始化环境
+if (!is_dir($dataDir)) mkdir($dataDir, 0777, true);
+if (!file_exists($dataFile)) file_put_contents($dataFile, json_encode([]));
 
-// --- 处理 GET 请求 ---
+// --- 1. 处理 GET (读取) ---
 if ($method === "GET") {
-    $content = file_get_contents($dataFile);
-    echo $content ? $content : json_encode([]);
+    echo file_get_contents($dataFile) ?: json_encode([]);
     exit;
 }
 
-// --- 处理 POST 请求 ---
+// --- 2. 处理 POST (写入) ---
 if ($method === "POST") {
-    $rawInput = file_get_contents("php://input");
-    $input = json_decode($rawInput, true);
-
+    $input = json_decode(file_get_contents("php://input"), true);
     if (!$input) {
-        http_response_code(400);
-        echo json_encode(["error" => "Invalid JSON received", "received" => $rawInput]);
-        exit;
+        echo json_encode(["error" => "Invalid JSON"]);
+        exit(http_response_code(400));
     }
 
-    // 读取现有数据
-    $currentData = file_get_contents($dataFile);
-    $orders = json_decode($currentData, true) ?: [];
-    
-    // 添加时间戳并压入数组
-    $input["time"] = date("Y-m-d H:i:s");
-    $orders[] = $input;
-
-    // 写入文件
-    if (file_put_contents($dataFile, json_encode($orders, JSON_PRETTY_PRINT))) {
-        echo json_encode(["status" => "ok", "message" => "Order saved"]);
+    /**
+     * 💡 逻辑区分：
+     * 'orders' 使用 [追加模式] (保存历史记录)
+     * 'cpq' 或其他配置类文件 使用 [覆盖模式] (保存最新设置)
+     */
+    if ($type === 'orders') {
+        $currentData = json_decode(file_get_contents($dataFile), true) ?: [];
+        // 如果是订单，我们帮它加个服务器时间
+        $input["server_time"] = date("Y-m-d H:i:s");
+        $currentData[] = $input;
+        $finalData = $currentData;
     } else {
-        http_response_code(500);
-        echo json_encode(["error" => "Server failed to write to data/orders.json. Check folder permissions."]);
+        // 配置类文件直接保存传过来的整个 JSON 对象
+        $finalData = $input;
+    }
+
+    // 执行写入
+    if (file_put_contents($dataFile, json_encode($finalData, JSON_PRETTY_PRINT))) {
+        echo json_encode(["status" => "success", "saved_to" => $type]);
+    } else {
+        echo json_encode(["error" => "Write failed"]);
+        exit(http_response_code(500));
     }
     exit;
 }
-
-// --- 处理其他请求 ---
-http_response_code(405);
-echo json_encode(["error" => "Method not allowed"]);

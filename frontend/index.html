@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Elite Golf CPQ - Azure Demo</title>
+  <title>CPQ Demo System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     :root { 
@@ -77,7 +77,7 @@
       .summary-section { border-left: none; border-top: 1px solid #edebe9; }
     }
 
-    /* Form UI */
+    /* Form Components */
     h3 { margin-top: 0; border-bottom: 1px solid #edebe9; padding-bottom: 10px; font-weight: 600; }
     label { display: block; margin-top: 18px; font-weight: 600; font-size: 14px; }
     select, input, textarea { 
@@ -92,14 +92,15 @@
       color: white; border: none; font-weight: 600; cursor: pointer;
     }
     .btn-submit:hover { background: var(--azure-dark); }
-    .warning { color: #a4262c; background: #fed9cc; padding: 10px; font-size: 13px; margin-top: 10px; display: none; }
+    .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+    .warning { color: #a4262c; background: #fed9cc; padding: 10px; font-size: 13px; margin-top: 10px; display: none; border-radius: 2px; }
     #loading-overlay { padding: 50px; text-align: center; font-weight: bold; color: var(--azure-blue); }
   </style>
 </head>
 <body>
 
 <nav>
-  <div class="nav-logo">Elite Golf CPQ</div>
+  <div class="nav-logo">CPQ Demo System</div>
   <div class="menu-icon" onclick="toggleMenu()">☰</div>
   <div class="lang-switcher" id="langMenu">
     <button class="lang-btn active" id="btn-en" onclick="changeLang('en')">English</button>
@@ -108,12 +109,12 @@
   </div>
 </nav>
 
-<div class="container" id="main-content">
-  <div id="loading-overlay">Loading CPQ Config...</div>
+<div class="container">
+  <div id="loading-overlay">Connecting to Azure...</div>
   
   <form id="cpqForm" class="cpq-grid" style="display: none;">
     <div class="config-section">
-      <h3 id="t-title">Course Configuration</h3>
+      <h3 id="t-title">Configuration</h3>
       
       <label id="t-name">Name</label>
       <input type="text" name="name" required placeholder="Enter name">
@@ -121,59 +122,62 @@
       <label id="t-category">Category</label>
       <select id="category" name="category"></select>
 
-      <label id="t-plan">Package / Session Count</label>
+      <label id="t-plan">Selection</label>
       <select id="plan" name="plan"></select>
       
-      <label id="t-segment">Customer Segment</label>
+      <label id="t-segment">Segment</label>
       <select id="identity" name="identity"></select>
       
       <div id="warn" class="warning"></div>
 
       <label id="t-notes">Notes</label>
-      <textarea name="notes" rows="2" placeholder="Any requests?"></textarea>
+      <textarea name="notes" rows="2" placeholder="Special requirements..."></textarea>
     </div>
 
     <div class="summary-section">
-      <h3 id="t-livequote">Live Quote</h3>
+      <h3 id="t-livequote">Quotation</h3>
       <div class="price-card">
         <div class="price-label" id="t-total">Total Amount</div>
         <div class="price-value">฿ <span id="totalDisplay">0</span></div>
       </div>
       
       <div>
-        <p><strong id="t-details">Package Details:</strong></p>
+        <p><strong id="t-details">Details:</strong></p>
         <ul id="benefits" style="font-size: 13px; color: #605e5c; padding-left: 20px;"></ul>
       </div>
 
-      <button type="submit" class="btn-submit" id="t-submit">Submit Quotation</button>
+      <button type="submit" class="btn-submit" id="t-submit">Submit Quote</button>
+      <p id="submit-status" style="font-size: 12px; text-align: center; margin-top: 10px; display: none;"></p>
     </div>
   </form>
 </div>
 
 <script>
+  // ✅ 恢复为你真实的 Azure 路径
   const API_URL = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
-  const CONFIG_URL = "backend/data/cpq.json"; 
+  const CONFIG_API = API_URL + "?type=cpq";
+  const ORDER_API = API_URL + "?type=orders";
 
   let catalog = {};
   let currentLang = 'en';
 
   const uiLabels = {
-    en: { title: "Course Configuration", name: "Name", category: "Category", plan: "Count", segment: "Segment", notes: "Notes", livequote: "Live Quote", total: "Total", details: "Details", submit: "Submit", warn: "⚠️ Weekday Special is for Junior/Senior/Ladies only.", segs: { regular: "Adult (Regular)", junior: "Junior", senior: "Senior", ladies: "Ladies" } },
-    jp: { title: "コース設定", name: "お名前", category: "区分", plan: "回数", segment: "属性", notes: "備考", livequote: "お見積り", total: "合計金額", details: "プラン内容", submit: "見積もり送信", warn: "⚠️ 平日プランはジュニア・シニア・レディース限定です。", segs: { regular: "一般大人", junior: "ジュニア", senior: "シニア", ladies: "レディース" } },
-    th: { title: "การกำหนดค่าหลักสูตร", name: "ชื่อ", category: "ประเภท", plan: "จำนวนครั้ง", segment: "ลูกค้า", notes: "หมายเหตุ", livequote: "ราคาประเมิน", total: "ยอดรวม", details: "รายละเอียด", submit: "ส่งใบเสนอราคา", warn: "⚠️ สำหรับเด็ก/ผู้สูงอายุ/สตรีเท่านั้น", segs: { regular: "ผู้ใหญ่ปกติ", junior: "เด็ก", senior: "ผู้สูงอายุ", ladies: "สตรี" } }
+    en: { title: "Configuration", name: "Name", category: "Category", plan: "Selection", segment: "Segment", notes: "Notes", livequote: "Quotation", total: "Total", details: "Details", submit: "Submit Quote", warn: "⚠️ Weekday Special is for Junior/Senior/Ladies only.", segs: { regular: "Adult (Regular)", junior: "Junior", senior: "Senior", ladies: "Ladies" } },
+    jp: { title: "構成設定", name: "お名前", category: "区分", plan: "プラン選択", segment: "属性", notes: "備考", livequote: "お見積り", total: "合計金額", details: "プラン内容", submit: "見積もり送信", warn: "⚠️ 平日プランはジュニア・シニア・レディース限定です。", segs: { regular: "一般大人", junior: "ジュニア", senior: "シニア", ladies: "レディース" } },
+    th: { title: "การกำหนดค่า", name: "ชื่อ", category: "ประเภท", plan: "การเลือก", segment: "ลูกค้า", notes: "หมายเหตุ", livequote: "ใบเสนอราคา", total: "ยอดรวม", details: "รายละเอียด", submit: "ส่งใบเสนอราคา", warn: "⚠️ สำหรับเด็ก/ผู้สูงอายุ/สตรีเท่านั้น", segs: { regular: "ผู้ใหญ่ปกติ", junior: "เด็ก", senior: "ผู้สูงอายุ", ladies: "สตรี" } }
   };
 
   async function init() {
     try {
-      const response = await fetch(CONFIG_URL);
-      if (!response.ok) throw new Error("JSON not found");
+      const response = await fetch(CONFIG_API);
+      if (!response.ok) throw new Error();
       const data = await response.json();
       catalog = data.catalog;
       document.getElementById('loading-overlay').style.display = 'none';
       document.getElementById('cpqForm').style.display = 'flex';
       renderUI();
     } catch (err) {
-      document.getElementById('loading-overlay').innerHTML = "❌ <small>Error loading <b>backend/data/cpq.json</b>. Make sure the file exists on Azure.</small>";
+      document.getElementById('loading-overlay').innerHTML = "❌ Error connecting to API.";
     }
   }
 
@@ -184,7 +188,7 @@
     document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(`btn-${lang}`).classList.add('active');
     renderUI();
-    if(window.innerWidth < 768 && document.getElementById('langMenu').classList.contains('show')) toggleMenu();
+    if(window.innerWidth < 768) document.getElementById('langMenu').classList.remove('show');
   }
 
   function renderUI() {
@@ -215,7 +219,6 @@
     const cat = document.getElementById('category').value;
     const planEl = document.getElementById('plan');
     const items = catalog[cat].items;
-    
     const prevPlan = planEl.value;
     planEl.innerHTML = Object.keys(items).map(k => `<option value="${k}">${k.replace(/_/g,' ').toUpperCase()}</option>`).join('');
     if(items[prevPlan]) planEl.value = prevPlan;
@@ -226,7 +229,8 @@
       document.getElementById('totalDisplay').innerText = "N/A";
     } else {
       document.getElementById('warn').style.display = 'none';
-      document.getElementById('totalDisplay').innerText = items[planEl.value].toLocaleString();
+      const price = items[planEl.value];
+      document.getElementById('totalDisplay').innerText = price ? price.toLocaleString() : "0";
     }
     document.getElementById('benefits').innerHTML = catalog[cat].benefits.map(b => `<li>${b}</li>`).join('');
   }
@@ -235,14 +239,29 @@
 
   document.getElementById('cpqForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (document.getElementById('totalDisplay').innerText === "N/A") return alert("Invalid Configuration");
+    if (document.getElementById('totalDisplay').innerText === "N/A") return;
+
+    const btn = document.getElementById('t-submit');
+    const status = document.getElementById('submit-status');
+    btn.disabled = true;
+    status.style.display = "block";
+    status.innerText = "Sending...";
+
     const data = Object.fromEntries(new FormData(e.target).entries());
     data.totalPrice = document.getElementById('totalDisplay').innerText;
-    data.timestamp = new Date().toLocaleString();
+
     try {
-      const res = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-      if (res.ok) alert("Success!");
-    } catch (err) { alert("Error!"); }
+      const res = await fetch(ORDER_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      if (res.ok) {
+        status.innerText = "Success ✓";
+        e.target.reset();
+        updatePrices();
+      }
+    } catch (err) {
+      status.innerText = "Error";
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   init();
