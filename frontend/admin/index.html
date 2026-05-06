@@ -2,72 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard</title>
+  <title>CPQ Admin Console - Control Center</title>
   <style>
-    :root { --azure-blue: #0078d4; --bg: #f3f2f1; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 25px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    :root { --azure-blue: #0078d4; --azure-dark: #005a9e; --bg: #f3f2f1; --danger: #d13438; --success: #107c10; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #323130; }
+    .container { max-width: 1100px; margin: 0 auto; background: white; padding: 25px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     
     /* Tabs */
     .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
-    .tab-btn { padding: 12px 25px; cursor: pointer; border: none; background: none; font-weight: 600; color: #666; }
+    .tab-btn { padding: 12px 25px; cursor: pointer; border: none; background: none; font-weight: 600; color: #666; font-size: 15px; }
     .tab-btn.active { color: var(--azure-blue); border-bottom: 3px solid var(--azure-blue); }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* Filter Bar */
-    .toolbar { display: flex; gap: 15px; align-items: center; background: #fafafa; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #eee; }
-    select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+    /* Orders Filter Bar */
+    .toolbar { display: flex; gap: 10px; align-items: center; background: #fafafa; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #eee; }
+    select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
 
-    /* Table */
+    /* Table UI */
     table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; background: #f4f4f4; padding: 12px; font-size: 13px; }
+    th { text-align: left; background: #f4f4f4; padding: 12px; font-size: 13px; color: #666; }
     td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-    .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-    .badge.done { background: #dff6dd; color: #107c10; }
+    .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .badge.done { background: #dff6dd; color: var(--success); }
     .badge.pending { background: #fff4ce; color: #794500; }
 
-    /* CPQ List Style */
-    .cpq-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #eee; margin-bottom: 10px; border-radius: 4px; }
-    .cpq-info { flex: 1; }
-    .cpq-price-tag { font-weight: bold; color: var(--azure-blue); margin-right: 20px; }
-    .btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; font-weight: 600; }
-    .btn-blue { background: var(--azure-blue); color: white; }
+    /* CPQ Category Cards */
+    .cat-card { border: 1px solid #ddd; border-radius: 4px; margin-bottom: 25px; background: #fff; }
+    .cat-header { background: #f8f9fa; padding: 15px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #ddd; }
+    .cat-title { font-weight: bold; font-size: 18px; color: var(--azure-blue); }
+    .restriction-box { margin-top: 8px; padding: 8px; background: #fff1f0; border: 1px solid #ffa39e; border-radius: 4px; font-size: 13px; }
     
-    /* Modal Placeholder */
-    #edit-modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:30px; box-shadow:0 0 20px rgba(0,0,0,0.3); z-index:100; border-radius:8px; width:400px; }
-    .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99; }
-    .modal-field { margin-bottom: 15px; }
-    .modal-field label { display:block; font-size:12px; color:#666; }
-    .modal-field input { width:100%; padding:8px; box-sizing:border-box; margin-top:5px; }
+    /* Plan Rows */
+    .item-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; gap: 15px; }
+    .item-row:last-child { border-bottom: none; }
+    .item-name { flex: 1; font-weight: 500; text-transform: uppercase; }
+    .item-price { width: 150px; position: relative; }
+    .item-price input { width: 100%; padding: 8px 8px 8px 25px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    .item-price::before { content: '฿'; position: absolute; left: 10px; top: 8px; color: #888; }
+
+    /* Buttons */
+    .btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; font-size: 14px; font-weight: 600; transition: 0.2s; }
+    .btn-blue { background: var(--azure-blue); color: white; }
+    .btn-blue:hover { background: var(--azure-dark); }
+    .btn-danger { background: #fff; color: var(--danger); border: 1px solid var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: white; }
+    .btn-add { margin: 15px; border: 2px dashed #ddd; color: #666; background: #fafafa; width: calc(100% - 30px); text-align: center; }
+    .btn-add:hover { border-color: var(--azure-blue); color: var(--azure-blue); background: #f0f7ff; }
+    
+    .save-bar { position: sticky; bottom: 20px; background: rgba(255,255,255,0.9); padding: 15px; border-radius: 8px; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; z-index: 100; backdrop-filter: blur(5px); border: 1px solid #ddd; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>CPQ Admin Manager</h2>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+    <h2 style="margin:0;">Management Console</h2>
+    <div id="status-tag" style="font-size:12px; color:#888;"></div>
+  </div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('orders')">Orders History</button>
-    <button class="tab-btn" onclick="switchTab('cpq')">Price & Config Manager</button>
+    <button class="tab-btn active" onclick="switchTab('orders')">Order Records</button>
+    <button class="tab-btn" onclick="switchTab('cpq')">Product & Rules Configuration</button>
   </div>
 
   <div id="panel-orders" class="tab-panel active">
     <div class="toolbar">
-      <strong>Year:</strong>
+      <strong>Filter:</strong>
       <select id="sel-year" onchange="renderOrders()"></select>
-      <strong>Month:</strong>
       <select id="sel-month" onchange="renderOrders()"></select>
-      <div style="margin-left:auto" id="order-stats"></div>
+      <button class="btn" style="background:#eee" onclick="resetOrderFilters()">Reset</button>
+      <div id="order-stats" style="margin-left:auto; font-weight:700; color:var(--azure-blue);"></div>
     </div>
     <table>
       <thead>
         <tr>
-          <th>Date</th>
+          <th>Date/Time</th>
           <th>Customer</th>
-          <th>Configuration</th>
-          <th>Total</th>
-          <th>Follow Up</th>
+          <th>Plan Details</th>
+          <th>Total Price</th>
+          <th>Status</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -76,42 +90,40 @@
   </div>
 
   <div id="panel-cpq" class="tab-panel">
-    <h3>Service Price List</h3>
-    <div id="cpq-visual-list">
+    <div id="cpq-editor-content">
       </div>
-  </div>
-</div>
-
-<div class="overlay" id="overlay" onclick="closeModal()"></div>
-<div id="edit-modal">
-  <h3 id="modal-title">Edit Price</h3>
-  <div class="modal-field">
-    <label>Price (THB)</label>
-    <input type="number" id="edit-price">
-  </div>
-  <div style="display:flex; gap:10px; justify-content:flex-end;">
-    <button class="btn" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-blue" onclick="confirmSavePrice()">Save Changes</button>
+    
+    <div class="save-bar">
+      <span style="color:#666; font-size:14px;">⚠️ Changes here will affect the live frontend immediately after saving.</span>
+      <button class="btn btn-blue" style="padding:12px 30px;" onclick="saveAllCPQ()">Save All Configuration</button>
+    </div>
   </div>
 </div>
 
 <script>
+  // 替换为你的 Azure API URL
   const API = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
-  let orders = [];
+  let ordersData = [];
   let cpqData = {};
-  let currentEdit = { cat: '', item: '' };
 
-  // --- Initialization ---
-  function initFilters() {
+  // --- 初始化 ---
+  function init() {
     const ySel = document.getElementById('sel-year');
     const mSel = document.getElementById('sel-month');
     const now = new Date();
     
     ySel.innerHTML = `<option value="all">All Years</option>`;
-    for(let i=2024; i<=2026; i++) ySel.innerHTML += `<option value="${i}" ${i===now.getFullYear()?'selected':''}>${i}</option>`;
+    for(let i=2024; i<=2026; i++) {
+      ySel.innerHTML += `<option value="${i}" ${i===now.getFullYear()?'selected':''}>${i}</option>`;
+    }
     
     const months = ["All Months","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    mSel.innerHTML = months.map((m, i) => `<option value="${i===0?'all':String(i).padStart(2,'0')}" ${i===now.getMonth()+1?'selected':''}>${m}</option>`).join('');
+    mSel.innerHTML = months.map((m, i) => {
+      const val = i === 0 ? 'all' : String(i).padStart(2, '0');
+      return `<option value="${val}" ${i===(now.getMonth()+1)?'selected':''}>${m}</option>`;
+    }).join('');
+
+    fetchOrders();
   }
 
   function switchTab(t) {
@@ -121,11 +133,13 @@
     if(t === 'orders') fetchOrders(); else fetchCPQ();
   }
 
-  // --- Orders Logic ---
+  // --- 订单逻辑 ---
   async function fetchOrders() {
-    const res = await fetch(API + "?type=orders");
-    orders = await res.json();
-    renderOrders();
+    try {
+      const res = await fetch(API + "?type=orders");
+      ordersData = await res.json();
+      renderOrders();
+    } catch(e) { console.error("Fetch Orders Failed"); }
   }
 
   function renderOrders() {
@@ -134,95 +148,146 @@
     const list = document.getElementById('order-list');
     list.innerHTML = "";
 
-    const filtered = orders.filter(o => {
+    const filtered = ordersData.filter(o => {
       if(!o.server_time) return false;
       const [year, month] = o.server_time.split('-');
-      const matchY = (y === 'all' || y === year);
-      const matchM = (m === 'all' || m === month);
-      return matchY && matchM;
+      return (y === 'all' || y === year) && (m === 'all' || m === month);
     }).reverse();
 
-    document.getElementById('order-stats').innerText = `Records: ${filtered.length}`;
+    document.getElementById('order-stats').innerText = `Count: ${filtered.length}`;
 
     filtered.forEach(o => {
-      const idx = orders.indexOf(o);
+      const globalIdx = ordersData.indexOf(o);
       list.innerHTML += `
         <tr>
           <td>${o.server_time}</td>
           <td><strong>${o.name}</strong><br><small>${o.phone}</small></td>
-          <td>${o.category} - ${o.plan}</td>
-          <td>฿${o.totalPrice}</td>
+          <td><span style="color:var(--azure-blue); font-size:12px; font-weight:bold;">${o.category.toUpperCase()}</span><br>${o.plan}</td>
+          <td style="font-weight:bold;">฿${o.totalPrice}</td>
           <td>
-            <input type="checkbox" ${o.follow_up?'checked':''} onchange="updateStatus(${idx}, this.checked)">
+            <input type="checkbox" ${o.follow_up?'checked':''} onchange="syncFollowUp(${globalIdx}, this.checked)">
             <span class="badge ${o.follow_up?'done':'pending'}">${o.follow_up?'DONE':'PENDING'}</span>
           </td>
-          <td><button onclick="saveOrders()">Save</button></td>
+          <td><button class="btn" style="font-size:12px;" onclick="saveOrdersToServer()">Sync</button></td>
         </tr>`;
     });
   }
 
-  async function updateStatus(idx, val) { orders[idx].follow_up = val; renderOrders(); }
-  async function saveOrders() {
-    await fetch(API + "?type=orders", { method: "POST", body: JSON.stringify(orders) });
-    alert("Order status synchronized.");
+  function syncFollowUp(idx, val) {
+    ordersData[idx].follow_up = val;
+    renderOrders();
   }
 
-  // --- CPQ Logic (Visual Editor) ---
+  async function saveOrdersToServer() {
+    const res = await fetch(API + "?type=orders", { method:"POST", body:JSON.stringify(ordersData) });
+    if(res.ok) alert("Order status updated!");
+  }
+
+  function resetOrderFilters() {
+    document.getElementById('sel-year').value = 'all';
+    document.getElementById('sel-month').value = 'all';
+    renderOrders();
+  }
+
+  // --- CPQ 配置逻辑 ---
   async function fetchCPQ() {
-    const res = await fetch(API + "?type=cpq");
-    cpqData = await res.json();
-    renderCPQList();
+    try {
+      const res = await fetch(API + "?type=cpq");
+      cpqData = await res.json();
+      renderCPQEditor();
+    } catch(e) { console.error("Fetch CPQ Failed"); }
   }
 
-  function renderCPQList() {
-    const container = document.getElementById('cpq-visual-list');
+  function renderCPQEditor() {
+    const container = document.getElementById('cpq-editor-content');
     container.innerHTML = "";
-    const cat = cpqData.catalog;
-    
-    for(let catKey in cat) {
-      container.innerHTML += `<h4 style="margin-top:25px; color:#666; border-left:4px solid var(--azure-blue); padding-left:10px;">${cat[catKey].en}</h4>`;
-      for(let itemKey in cat[catKey].items) {
-        container.innerHTML += `
-          <div class="cpq-item">
-            <div class="cpq-info">
-              <strong>${itemKey.replace(/_/g,' ').toUpperCase()}</strong>
-            </div>
+    const catalog = cpqData.catalog;
+
+    for (let catKey in catalog) {
+      const cat = catalog[catKey];
+      const restricted = cat.restricted || [];
+      
+      let html = `
+        <div class="cat-card">
+          <div class="cat-header">
             <div>
-              <span class="cpq-price-tag">฿ ${cat[catKey].items[itemKey].toLocaleString()}</span>
-              <button class="btn btn-blue" onclick="openEditPrice('${catKey}', '${itemKey}', ${cat[catKey].items[itemKey]})">Edit Price</button>
+              <span class="cat-title">${cat.en}</span> <small style="color:#888; margin-left:10px;">ID: ${catKey}</small>
+              <div class="restriction-box">
+                <strong>Business Rule:</strong> Block access for 
+                <label style="margin-left:10px;"><input type="checkbox" ${restricted.includes('regular')?'checked':''} onchange="toggleRestrict('${catKey}', 'regular')"> Regular Adult</label>
+                <label style="margin-left:10px;"><input type="checkbox" ${restricted.includes('junior')?'checked':''} onchange="toggleRestrict('${catKey}', 'junior')"> Junior</label>
+              </div>
             </div>
+          </div>
+          <div id="items-${catKey}">`;
+
+      for (let itemKey in cat.items) {
+        html += `
+          <div class="item-row">
+            <div class="item-name">${itemKey.replace(/_/g, ' ')}</div>
+            <div class="item-price">
+              <input type="number" value="${cat.items[itemKey]}" onchange="updateLocalPrice('${catKey}', '${itemKey}', this.value)">
+            </div>
+            <button class="btn btn-danger" onclick="deletePlan('${catKey}', '${itemKey}')">Delete</button>
           </div>`;
       }
+
+      html += `</div>
+          <button class="btn btn-add" onclick="addNewPlan('${catKey}')">+ Add New Plan to ${cat.en}</button>
+        </div>`;
+      container.innerHTML += html;
     }
   }
 
-  function openEditPrice(cat, item, price) {
-    currentEdit = { cat, item };
-    document.getElementById('modal-title').innerText = `Edit: ${item.replace(/_/g,' ')}`;
-    document.getElementById('edit-price').value = price;
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('edit-modal').style.display = 'block';
+  function toggleRestrict(catKey, role) {
+    if(!cpqData.catalog[catKey].restricted) cpqData.catalog[catKey].restricted = [];
+    const arr = cpqData.catalog[catKey].restricted;
+    const idx = arr.indexOf(role);
+    if(idx > -1) arr.splice(idx, 1); else arr.push(role);
+    renderCPQEditor();
   }
 
-  function closeModal() {
-    document.getElementById('overlay').style.display = 'none';
-    document.getElementById('edit-modal').style.display = 'none';
+  function updateLocalPrice(catKey, itemKey, val) {
+    cpqData.catalog[catKey].items[itemKey] = parseInt(val);
   }
 
-  async function confirmSavePrice() {
-    const newPrice = parseInt(document.getElementById('edit-price').value);
-    cpqData.catalog[currentEdit.cat].items[currentEdit.item] = newPrice;
+  function deletePlan(catKey, itemKey) {
+    if(confirm(`Are you sure you want to delete ${itemKey}?`)) {
+      delete cpqData.catalog[catKey].items[itemKey];
+      renderCPQEditor();
+    }
+  }
+
+  function addNewPlan(catKey) {
+    const name = prompt("Enter Plan ID (e.g. 20_lessons):");
+    if(!name) return;
+    const price = prompt("Enter Price (Number only):", "0");
+    if(price === null) return;
     
-    const res = await fetch(API + "?type=cpq", { method: "POST", body: JSON.stringify(cpqData) });
-    if(res.ok) {
-      alert("Price Updated!");
-      closeModal();
-      renderCPQList();
-    }
+    cpqData.catalog[catKey].items[name.toLowerCase().replace(/\s+/g, '_')] = parseInt(price);
+    renderCPQEditor();
   }
 
-  initFilters();
-  fetchOrders();
+  async function saveAllCPQ() {
+    const btn = event.target;
+    btn.innerText = "Saving...";
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(API + "?type=cpq", {
+        method: "POST",
+        body: JSON.stringify(cpqData)
+      });
+      if(res.ok) {
+        alert("Success! CPQ logic and prices updated.");
+      }
+    } catch(e) { alert("Save failed!"); }
+    
+    btn.innerText = "Save All Configuration";
+    btn.disabled = false;
+  }
+
+  init();
 </script>
 </body>
 </html>
