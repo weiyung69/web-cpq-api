@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Example Product</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 40px;
+      max-width: 720px;
+    }
+    h1, h2 { margin-bottom: .5em; }
+    label { display: block; margin-top: 15px; font-weight: 600; }
+    select, input, textarea, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      font-size: 16px;
+    }
+    .box {
+      background: #f5f5f5;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .price {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .success, .error {
+      display: none;
+      margin-top: 15px;
+      padding: 10px;
+    }
+    .success { background: #e6ffed; }
+    .error { background: #ffecec; }
+  </style>
+</head>
+<body>
+
+<h1>Example Product</h1>
+<p>Flexible plans based on your needs.</p>
+
+<div class="box">
+  <h2>Order Configuration</h2>
+
+  <form id="orderForm">
+    <label>
+      Name
+      <input name="name" required />
+    </label>
+
+    <label>
+      Email
+      <input type="email" name="email" required />
+    </label>
+
+    <label>
+      Plan
+      <select name="plan" id="plan">
+        <option value="basic">Basic Plan</option>
+        <option value="standard">Standard Plan</option>
+        <option value="premium">Premium Plan</option>
+      </select>
+    </label>
+
+    <label>
+      Module
+      <select name="module" id="module">
+        <option value="basic">Basic Module</option>
+        <option value="full">Full Module</option>
+      </select>
+    </label>
+
+    <label>
+      Support
+      <select name="support" id="support">
+        <option value="no">Non Support</option>
+        <option value="yes">Support</option>
+      </select>
+    </label>
+
+    <div class="box">
+      <strong>Order Summary</strong>
+      <p class="price">Total: USD <span id="price">0</span></p>
+    </div>
+
+    <label>
+      Notes
+      <textarea name="notes" rows="3"></textarea>
+    </label>
+
+    <button type="submit">Submit Order</button>
+  </form>
+
+  <div class="success" id="success">✅ Order submitted</div>
+  <div class="error" id="error">❌ Submit failed</div>
+</div>
+
+<script>
+  // ✅ BACKEND API BASE URL（真实 App Service）
+  const API_URL = "https://web-api-demo-fdhgcjf2hscehjdd.malaysiawest-01.azurewebsites.net/api.php";
+
+  const prices = {
+    plan: { basic: 50, standard: 100, premium: 200 },
+    module: { basic: 0, full: 80 },
+    support: { no: 0, yes: 50 }
+  };
+
+  const plan = document.getElementById("plan");
+  const moduleEl = document.getElementById("module");
+  const support = document.getElementById("support");
+  const priceEl = document.getElementById("price");
+
+  function calculate() {
+    const total =
+      prices.plan[plan.value] +
+      prices.module[moduleEl.value] +
+      prices.support[support.value];
+    priceEl.textContent = total;
+  }
+
+  [plan, moduleEl, support].forEach(el =>
+    el.addEventListener("change", calculate)
+  );
+  calculate();
+
+  document.getElementById("orderForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    success.style.display = "none";
+    error.style.display = "none";
+
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    data.totalPrice = priceEl.textContent;
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      if (!res.ok) throw new Error("Request failed");
+      e.target.reset();
+      calculate();
+      success.style.display = "block";
+    } catch (err) {
+      console.error(err);
+      error.style.display = "block";
+    }
+  });
+</script>
+
+</body>
+</html>
