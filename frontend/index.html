@@ -1,155 +1,251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Example </title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>Elite Golf CPQ - Azure Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      margin: 40px;
-      max-width: 720px;
+    :root { 
+      --azure-blue: #0078d4; 
+      --azure-dark: #005a9e;
+      --bg: #f3f2f1; 
+      --text: #323130;
     }
-    h1, h2 { margin-bottom: .5em; }
-    label { display: block; margin-top: 15px; font-weight: 600; }
-    select, input, textarea, button {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      font-size: 16px;
+    
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+
+    /* --- Navigation --- */
+    nav {
+      background: var(--azure-dark);
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .box {
-      background: #f5f5f5;
-      padding: 15px;
-      margin: 20px 0;
+
+    .nav-logo { font-weight: 600; font-size: 18px; }
+    .menu-icon { display: none; cursor: pointer; font-size: 24px; }
+
+    .lang-switcher { display: flex; gap: 8px; }
+    .lang-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 4px 10px;
+      cursor: pointer;
+      border-radius: 2px;
+      font-size: 12px;
     }
-    .price {
-      font-size: 20px;
-      font-weight: bold;
+    .lang-btn.active { background: white; color: var(--azure-dark); border-color: white; }
+
+    /* --- Layout --- */
+    .container { 
+      max-width: 1000px; 
+      margin: 20px auto;
+      background: white; 
+      box-shadow: 0 1.6px 3.6px 0 rgba(0,0,0,0.132);
+      display: flex;
+      flex-direction: column;
     }
-    .success, .error {
-      display: none;
-      margin-top: 15px;
-      padding: 10px;
+
+    .cpq-grid { display: flex; flex-direction: column; }
+    @media (min-width: 768px) { .cpq-grid { flex-direction: row; } }
+
+    .config-section { flex: 1; padding: 25px; }
+    .summary-section { flex: 0 0 320px; background: #faf9f8; padding: 25px; border-left: 1px solid #edebe9; }
+
+    /* Mobile Menu */
+    @media (max-width: 767px) {
+      .menu-icon { display: block; }
+      .lang-switcher {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 50px;
+        right: 0;
+        background: var(--azure-dark);
+        width: 100%;
+        padding: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      }
+      .lang-switcher.show { display: flex; }
+      .summary-section { border-left: none; border-top: 1px solid #edebe9; }
     }
-    .success { background: #e6ffed; }
-    .error { background: #ffecec; }
+
+    /* Form UI */
+    h3 { margin-top: 0; border-bottom: 1px solid #edebe9; padding-bottom: 10px; font-weight: 600; }
+    label { display: block; margin-top: 18px; font-weight: 600; font-size: 14px; }
+    select, input, textarea { 
+      width: 100%; padding: 10px; margin-top: 8px; 
+      border: 1px solid #8a8886; box-sizing: border-box; 
+      border-radius: 2px; font-size: 16px;
+    }
+    .price-card { background: white; border: 1px solid #edebe9; padding: 20px; text-align: center; margin: 20px 0; }
+    .price-value { font-size: 32px; color: var(--azure-blue); font-weight: 700; }
+    .btn-submit { 
+      width: 100%; padding: 12px; background: var(--azure-blue); 
+      color: white; border: none; font-weight: 600; cursor: pointer;
+    }
+    .btn-submit:hover { background: var(--azure-dark); }
+    .warning { color: #a4262c; background: #fed9cc; padding: 10px; font-size: 13px; margin-top: 10px; display: none; }
+    #loading-overlay { padding: 50px; text-align: center; font-weight: bold; color: var(--azure-blue); }
   </style>
 </head>
 <body>
 
-<h1>Example </h1>
-<p>Flexible plans based on your needs.</p>
+<nav>
+  <div class="nav-logo">Elite Golf CPQ</div>
+  <div class="menu-icon" onclick="toggleMenu()">☰</div>
+  <div class="lang-switcher" id="langMenu">
+    <button class="lang-btn active" id="btn-en" onclick="changeLang('en')">English</button>
+    <button class="lang-btn" id="btn-jp" onclick="changeLang('jp')">日本語</button>
+    <button class="lang-btn" id="btn-th" onclick="changeLang('th')">ไทย</button>
+  </div>
+</nav>
 
-<div class="box">
-  <h2>Order Configuration</h2>
+<div class="container" id="main-content">
+  <div id="loading-overlay">Loading CPQ Config...</div>
+  
+  <form id="cpqForm" class="cpq-grid" style="display: none;">
+    <div class="config-section">
+      <h3 id="t-title">Course Configuration</h3>
+      
+      <label id="t-name">Name</label>
+      <input type="text" name="name" required placeholder="Enter name">
 
-  <form id="orderForm">
-    <label>
-      Name
-      <input name="name" required />
-    </label>
+      <label id="t-category">Category</label>
+      <select id="category" name="category"></select>
 
-    <label>
-      Email
-      <input type="email" name="email" required />
-    </label>
+      <label id="t-plan">Package / Session Count</label>
+      <select id="plan" name="plan"></select>
+      
+      <label id="t-segment">Customer Segment</label>
+      <select id="identity" name="identity"></select>
+      
+      <div id="warn" class="warning"></div>
 
-    <label>
-      Plan
-      <select name="plan" id="plan">
-        <option value="basic">Basic Plan</option>
-        <option value="standard">Standard Plan</option>
-        <option value="premium">Premium Plan</option>
-      </select>
-    </label>
-
-    <label>
-      Module
-      <select name="module" id="module">
-        <option value="basic">Basic Module</option>
-        <option value="full">Full Module</option>
-      </select>
-    </label>
-
-    <label>
-      Support
-      <select name="support" id="support">
-        <option value="no">Non Support</option>
-        <option value="yes">Support</option>
-      </select>
-    </label>
-
-    <div class="box">
-      <strong>Order Summary</strong>
-      <p class="price">Total: USD <span id="price">0</span></p>
+      <label id="t-notes">Notes</label>
+      <textarea name="notes" rows="2" placeholder="Any requests?"></textarea>
     </div>
 
-    <label>
-      Notes
-      <textarea name="notes" rows="3"></textarea>
-    </label>
+    <div class="summary-section">
+      <h3 id="t-livequote">Live Quote</h3>
+      <div class="price-card">
+        <div class="price-label" id="t-total">Total Amount</div>
+        <div class="price-value">฿ <span id="totalDisplay">0</span></div>
+      </div>
+      
+      <div>
+        <p><strong id="t-details">Package Details:</strong></p>
+        <ul id="benefits" style="font-size: 13px; color: #605e5c; padding-left: 20px;"></ul>
+      </div>
 
-    <button type="submit">Submit Order</button>
+      <button type="submit" class="btn-submit" id="t-submit">Submit Quotation</button>
+    </div>
   </form>
-
-  <div class="success" id="success">✅ Order submitted</div>
-  <div class="error" id="error">❌ Submit failed</div>
 </div>
 
 <script>
-  // ✅ BACKEND API BASE URL（真实 App Service）
   const API_URL = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
+  const CONFIG_URL = "backend/data/cpq.json"; 
 
-  const prices = {
-    plan: { basic: 50, standard: 100, premium: 200 },
-    module: { basic: 0, full: 80 },
-    support: { no: 0, yes: 50 }
+  let catalog = {};
+  let currentLang = 'en';
+
+  const uiLabels = {
+    en: { title: "Course Configuration", name: "Name", category: "Category", plan: "Count", segment: "Segment", notes: "Notes", livequote: "Live Quote", total: "Total", details: "Details", submit: "Submit", warn: "⚠️ Weekday Special is for Junior/Senior/Ladies only.", segs: { regular: "Adult (Regular)", junior: "Junior", senior: "Senior", ladies: "Ladies" } },
+    jp: { title: "コース設定", name: "お名前", category: "区分", plan: "回数", segment: "属性", notes: "備考", livequote: "お見積り", total: "合計金額", details: "プラン内容", submit: "見積もり送信", warn: "⚠️ 平日プランはジュニア・シニア・レディース限定です。", segs: { regular: "一般大人", junior: "ジュニア", senior: "シニア", ladies: "レディース" } },
+    th: { title: "การกำหนดค่าหลักสูตร", name: "ชื่อ", category: "ประเภท", plan: "จำนวนครั้ง", segment: "ลูกค้า", notes: "หมายเหตุ", livequote: "ราคาประเมิน", total: "ยอดรวม", details: "รายละเอียด", submit: "ส่งใบเสนอราคา", warn: "⚠️ สำหรับเด็ก/ผู้สูงอายุ/สตรีเท่านั้น", segs: { regular: "ผู้ใหญ่ปกติ", junior: "เด็ก", senior: "ผู้สูงอายุ", ladies: "สตรี" } }
   };
 
-  const plan = document.getElementById("plan");
-  const moduleEl = document.getElementById("module");
-  const support = document.getElementById("support");
-  const priceEl = document.getElementById("price");
-
-  function calculate() {
-    const total =
-      prices.plan[plan.value] +
-      prices.module[moduleEl.value] +
-      prices.support[support.value];
-    priceEl.textContent = total;
+  async function init() {
+    try {
+      const response = await fetch(CONFIG_URL);
+      if (!response.ok) throw new Error("JSON not found");
+      const data = await response.json();
+      catalog = data.catalog;
+      document.getElementById('loading-overlay').style.display = 'none';
+      document.getElementById('cpqForm').style.display = 'flex';
+      renderUI();
+    } catch (err) {
+      document.getElementById('loading-overlay').innerHTML = "❌ <small>Error loading <b>backend/data/cpq.json</b>. Make sure the file exists on Azure.</small>";
+    }
   }
 
-  [plan, moduleEl, support].forEach(el =>
-    el.addEventListener("change", calculate)
-  );
-  calculate();
+  function toggleMenu() { document.getElementById('langMenu').classList.toggle('show'); }
 
-  document.getElementById("orderForm").addEventListener("submit", async e => {
-    e.preventDefault();
-    success.style.display = "none";
-    error.style.display = "none";
+  function changeLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`btn-${lang}`).classList.add('active');
+    renderUI();
+    if(window.innerWidth < 768 && document.getElementById('langMenu').classList.contains('show')) toggleMenu();
+  }
 
-    const data = Object.fromEntries(new FormData(e.target).entries());
-    data.totalPrice = priceEl.textContent;
+  function renderUI() {
+    const d = uiLabels[currentLang];
+    document.getElementById('t-title').innerText = d.title;
+    document.getElementById('t-name').innerText = d.name;
+    document.getElementById('t-category').innerText = d.category;
+    document.getElementById('t-plan').innerText = d.plan;
+    document.getElementById('t-segment').innerText = d.segment;
+    document.getElementById('t-notes').innerText = d.notes;
+    document.getElementById('t-livequote').innerText = d.livequote;
+    document.getElementById('t-total').innerText = d.total;
+    document.getElementById('t-details').innerText = d.details;
+    document.getElementById('t-submit').innerText = d.submit;
+    document.getElementById('warn').innerText = d.warn;
 
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
+    const catEl = document.getElementById('category');
+    const savedCat = catEl.value;
+    catEl.innerHTML = Object.keys(catalog).map(key => `<option value="${key}">${catalog[key][currentLang]}</option>`).join('');
+    if(catalog[savedCat]) catEl.value = savedCat;
 
-      if (!res.ok) throw new Error("Request failed");
-      e.target.reset();
-      calculate();
-      success.style.display = "block";
-    } catch (err) {
-      console.error(err);
-      error.style.display = "block";
+    const segEl = document.getElementById('identity');
+    segEl.innerHTML = Object.entries(d.segs).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
+    updatePrices();
+  }
+
+  function updatePrices() {
+    const cat = document.getElementById('category').value;
+    const planEl = document.getElementById('plan');
+    const items = catalog[cat].items;
+    
+    const prevPlan = planEl.value;
+    planEl.innerHTML = Object.keys(items).map(k => `<option value="${k}">${k.replace(/_/g,' ').toUpperCase()}</option>`).join('');
+    if(items[prevPlan]) planEl.value = prevPlan;
+    
+    const isRestricted = (cat === 'weekday' && document.getElementById('identity').value === 'regular');
+    if (isRestricted) {
+      document.getElementById('warn').style.display = 'block';
+      document.getElementById('totalDisplay').innerText = "N/A";
+    } else {
+      document.getElementById('warn').style.display = 'none';
+      document.getElementById('totalDisplay').innerText = items[planEl.value].toLocaleString();
     }
-  });
-</script>
+    document.getElementById('benefits').innerHTML = catalog[cat].benefits.map(b => `<li>${b}</li>`).join('');
+  }
 
+  [document.getElementById('category'), document.getElementById('identity'), document.getElementById('plan')].forEach(el => el.addEventListener('change', updatePrices));
+
+  document.getElementById('cpqForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (document.getElementById('totalDisplay').innerText === "N/A") return alert("Invalid Configuration");
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    data.totalPrice = document.getElementById('totalDisplay').innerText;
+    data.timestamp = new Date().toLocaleString();
+    try {
+      const res = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      if (res.ok) alert("Success!");
+    } catch (err) { alert("Error!"); }
+  });
+
+  init();
+</script>
 </body>
 </html>
