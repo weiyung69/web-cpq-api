@@ -10,17 +10,9 @@ header("Content-Type: application/json");
 
 if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") { exit(http_response_code(200)); }
 
-// --- 基础配置 ---
 $dataDir = __DIR__ . "/data";
 $method  = $_SERVER["REQUEST_METHOD"];
-
-// 获取请求类型（默认为 orders）
 $type = isset($_GET['type']) ? $_GET['type'] : 'orders';
-
-/**
- * 💡 以后如果增加新的 JSON 文件（如 products.json）
- * 只需在下面的数组里加上 'products' 即可
- */
 $allowedFiles = ['orders', 'cpq']; 
 
 if (!in_array($type, $allowedFiles)) {
@@ -29,18 +21,16 @@ if (!in_array($type, $allowedFiles)) {
 }
 
 $dataFile = $dataDir . "/" . $type . ".json";
-
-// 初始化环境
 if (!is_dir($dataDir)) mkdir($dataDir, 0777, true);
 if (!file_exists($dataFile)) file_put_contents($dataFile, json_encode([]));
 
-// --- 1. 处理 GET (读取) ---
+// --- 1. 处理 GET ---
 if ($method === "GET") {
     echo file_get_contents($dataFile) ?: json_encode([]);
     exit;
 }
 
-// --- 2. 处理 POST (写入) ---
+// --- 2. 处理 POST ---
 if ($method === "POST") {
     $input = json_decode(file_get_contents("php://input"), true);
     if (!$input) {
@@ -49,24 +39,32 @@ if ($method === "POST") {
     }
 
     /**
-     * 💡 逻辑区分：
-     * 'orders' 使用 [追加模式] (保存历史记录)
-     * 'cpq' 或其他配置类文件 使用 [覆盖模式] (保存最新设置)
+     * 💡 核心逻辑：智能判断保存模式
      */
-    if ($type === 'orders') {
-        $currentData = json_decode(file_get_contents($dataFile), true) ?: [];
-        // 如果是订单，我们帮它加个服务器时间
-        $input["server_time"] = date("Y-m-d H:i:s");
-        $currentData[] = $input;
-        $finalData = $currentData;
-    } else {
-        // 配置类文件直接保存传过来的整个 JSON 对象
+    if ($type === 'cpq') {
+        // CPQ 永远是 [全量覆盖]
         $finalData = $input;
+    } else if ($type === 'orders') {
+        // 判断是 Admin 还是 Frontend
+        if (isset($input[0])) {
+            // 情况 A: 传过来的是数组 [{}, {}...] -> 这是 Admin 在更新状态，执行 [全量覆盖]
+            $finalData = $input;
+        } else {
+            // 情况 B: 传过来的是对象 {name:...} -> 这是 Frontend 提交新订单，执行 [追加模式]
+            $currentData = json_decode(file_get_contents($dataFile), true) ?: [];
+            
+            // 自动补齐后端字段
+            $input["server_time"] = date("Y-m-d H:i:s");
+            $input["follow_up"] = false; // 新订单默认未跟进
+            
+            $currentData[] = $input;
+            $finalData = $currentData;
+        }
     }
 
-    // 执行写入
-    if (file_put_contents($dataFile, json_encode($finalData, JSON_PRETTY_PRINT))) {
-        echo json_encode(["status" => "success", "saved_to" => $type]);
+    // 执行写入 (LOCK_EX 确保多人在改价或下单时文件不会写坏)
+    if (file_put_contents($dataFile, json_encode($finalData, JSON_PRETTY_PRINT), LOCK_EX)) {
+        echo json_encode(["status" => "success", "mode" => isset($input[0]) ? "overwrite" : "append"]);
     } else {
         echo json_encode(["error" => "Write failed"]);
         exit(http_response_code(500));

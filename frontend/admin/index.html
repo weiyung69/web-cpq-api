@@ -1,142 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Admin Portal</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>CPQ Admin Console</title>
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      margin: 20px;
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 14px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      vertical-align: top;
-    }
-    th {
-      background: #f5f5f5;
-      text-align: left;
-    }
-    .status {
-      font-weight: bold;
-    }
-    .action {
-      color: green;
-    }
-    .no-action {
-      color: #999;
-    }
-    @media (max-width: 600px) {
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-      th {
-        display: none;
-      }
-      tr {
-        margin-bottom: 15px;
-        border: 1px solid #ddd;
-        padding: 10px;
-      }
-      td {
-        border: none;
-        padding: 4px 0;
-      }
-      td::before {
-        font-weight: bold;
-        display: block;
-      }
-      td:nth-child(1)::before { content: "Time"; }
-      td:nth-child(2)::before { content: "Name"; }
-      td:nth-child(3)::before { content: "Email"; }
-      td:nth-child(4)::before { content: "Plan"; }
-      td:nth-child(5)::before { content: "Module"; }
-      td:nth-child(6)::before { content: "Support"; }
-      td:nth-child(7)::before { content: "Price"; }
-      td:nth-child(8)::before { content: "Status"; }
-    }
+    :root { --azure-blue: #0078d4; --azure-dark: #005a9e; --bg: #f3f2f1; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #323130; }
+    
+    .admin-box { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    
+    /* Tabs System */
+    .tabs { display: flex; gap: 5px; margin-bottom: 0; }
+    .tab-btn { padding: 12px 25px; cursor: pointer; border: 1px solid #ddd; border-bottom: none; background: #fafafa; border-radius: 4px 4px 0 0; font-weight: 600; color: #666; transition: 0.2s; }
+    .tab-btn.active { background: white; color: var(--azure-blue); border-top: 3px solid var(--azure-blue); }
+    
+    .tab-content { display: none; border: 1px solid #ddd; padding: 25px; background: white; min-height: 400px; }
+    .tab-content.active { display: block; }
+
+    /* Toolbar & Filter */
+    .toolbar { display: flex; gap: 15px; margin-bottom: 20px; align-items: center; background: #f3f2f1; padding: 15px; border-radius: 4px; border: 1px solid #edebe9; }
+    select, input[type="date"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+
+    /* Table UI */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { text-align: left; background: #faf9f8; padding: 12px; font-size: 13px; color: #605e5c; border-bottom: 2px solid #edebe9; }
+    td { padding: 12px; border-bottom: 1px solid #f3f2f1; font-size: 14px; vertical-align: top; }
+    
+    /* Status Badges */
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; }
+    .badge.done { background: #dff6dd; color: #107c10; }
+    .badge.pending { background: #fff4ce; color: #794500; }
+
+    /* CPQ Editor */
+    #json-editor { width: 100%; height: 550px; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 13px; padding: 15px; border: 1px solid #ccc; border-radius: 4px; background: #fafafa; line-height: 1.5; }
+    
+    .btn-save { background: var(--azure-blue); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .btn-save:hover { background: var(--azure-dark); }
+    .btn-mini { padding: 5px 12px; font-size: 12px; cursor: pointer; border: 1px solid #0078d4; background: white; color: #0078d4; border-radius: 4px; }
+    .btn-mini:hover { background: #0078d4; color: white; }
+    
+    .status-msg { margin-left: 15px; font-size: 13px; font-weight: 600; }
   </style>
 </head>
 <body>
 
-<h1>Admin Portal</h1>
-<p>Order list (read-only demo)</p>
+<div class="admin-box">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2 style="margin:0 0 20px 0; color: #323130;">CPQ Management Dashboard</h2>
+    <div id="global-status" style="font-size: 12px; color: #666;"></div>
+  </div>
 
-<table id="ordersTable">
-  <thead>
-    <tr>
-      <th>Time</th>
-      <th>Name</th>
-      <th>Email</th>
-      <th>Plan</th>
-      <th>Module</th>
-      <th>Support</th>
-      <th>Price</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab(event, 'orders-tab')">Orders & Leads</button>
+    <button class="tab-btn" onclick="switchTab(event, 'config-tab')">Product Config (JSON)</button>
+  </div>
+
+  <div id="orders-tab" class="tab-content active">
+    <div class="toolbar">
+      <strong>Sort:</strong>
+      <select id="sort-order" onchange="renderOrders()">
+        <option value="desc">Newest First</option>
+        <option value="asc">Oldest First</option>
+      </select>
+      
+      <strong>Filter Date:</strong>
+      <input type="date" id="date-picker" onchange="renderOrders()">
+      
+      <button onclick="resetFilters()">Reset</button>
+      
+      <div style="margin-left:auto; font-weight: bold;" id="stats-label">Loading...</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Customer Info</th>
+          <th>Configuration</th>
+          <th>Total Price</th>
+          <th>Follow-up Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="order-tbody"></tbody>
+    </table>
+  </div>
+
+  <div id="config-tab" class="tab-content">
+    <div style="margin-bottom: 15px; display:flex; justify-content: space-between; align-items:center;">
+      <span><strong>Live JSON Editor:</strong> 修改后点击保存，前端价格将即时生效</span>
+      <button class="btn-save" onclick="updateConfig()">Save JSON Changes</button>
+    </div>
+    <textarea id="json-editor" spellcheck="false"></textarea>
+    <div id="config-feedback" class="status-msg"></div>
+  </div>
+</div>
 
 <script>
-  // ✅ BACKEND API BASE URL（真实 App Service）
-  const API_URL = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
+  // ✅ 核心：Azure 绝对路径
+  const API_BASE = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
+  let masterOrders = [];
 
-  async function loadOrders() {
-    const res = await fetch(API_URL);
-    const orders = await res.json();
+  // --- Tab Logic ---
+  function switchTab(evt, tabId) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    evt.currentTarget.classList.add('active');
+    
+    if(tabId === 'orders-tab') fetchAllOrders();
+    if(tabId === 'config-tab') fetchCPQConfig();
+  }
 
-    const tbody = document.querySelector("#ordersTable tbody");
+  // --- Orders Logic ---
+  async function fetchAllOrders() {
+    try {
+      const res = await fetch(`${API_BASE}?type=orders`);
+      masterOrders = await res.json();
+      renderOrders();
+    } catch (e) { console.error("Error fetching orders"); }
+  }
+
+  function renderOrders() {
+    const tbody = document.getElementById('order-tbody');
+    const sortDir = document.getElementById('sort-order').value;
+    const dateFilter = document.getElementById('date-picker').value;
     tbody.innerHTML = "";
 
-    orders.reverse().forEach(order => {
-      const tr = document.createElement("tr");
+    // 1. 过滤逻辑
+    let filtered = [...masterOrders];
+    if (dateFilter) {
+      filtered = filtered.filter(o => o.server_time && o.server_time.includes(dateFilter));
+    }
 
+    // 2. 排序逻辑
+    filtered.sort((a, b) => {
+      const tA = new Date(a.server_time || 0);
+      const tB = new Date(b.server_time || 0);
+      return sortDir === 'desc' ? tB - tA : tA - tB;
+    });
+
+    document.getElementById('stats-label').innerText = `Total Records: ${filtered.length}`;
+
+    // 3. 渲染行
+    filtered.forEach((item) => {
+      const globalIdx = masterOrders.indexOf(item);
+      const isDone = item.follow_up === true;
+      
+      const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${order.time || "-"}</td>
-        <td>${order.name}</td>
-        <td>${order.email}</td>
-        <td>${order.plan}</td>
-        <td>${order.module}</td>
-        <td>${order.support}</td>
-        <td>USD ${order.totalPrice}</td>
+        <td>${item.server_time || '--'}</td>
         <td>
-          <label>
-            <input type="checkbox" onchange="toggleStatus(this)" />
-            <span class="status no-action">Non‑action</span>
-          </label>
+          <strong>${item.name}</strong><br>
+          <small>${item.email}<br>${item.phone}</small>
+        </td>
+        <td>
+          <span style="text-transform: uppercase; font-size: 11px; color: #0078d4; font-weight: bold;">${item.category}</span><br>
+          ${item.plan.replace(/_/g, ' ')}
+        </td>
+        <td style="font-weight: 600;">฿ ${item.totalPrice}</td>
+        <td>
+          <input type="checkbox" id="cb-${globalIdx}" ${isDone ? 'checked' : ''} onchange="syncBadge(${globalIdx})">
+          <span id="badge-${globalIdx}" class="badge ${isDone ? 'done' : 'pending'}">${isDone ? 'DONE' : 'PENDING'}</span>
+        </td>
+        <td>
+          <button class="btn-mini" onclick="saveSingleState(${globalIdx})">Update</button>
         </td>
       `;
       tbody.appendChild(tr);
     });
   }
 
-  function toggleStatus(checkbox) {
-    const span = checkbox.nextElementSibling;
-    if (checkbox.checked) {
-      span.textContent = "Action";
-      span.className = "status action";
+  function syncBadge(idx) {
+    const cb = document.getElementById(`cb-${idx}`);
+    const badge = document.getElementById(`badge-${idx}`);
+    if(cb.checked) {
+      badge.className = "badge done"; badge.innerText = "DONE";
     } else {
-      span.textContent = "Non‑action";
-      span.className = "status no-action";
+      badge.className = "badge pending"; badge.innerText = "PENDING";
     }
-
-    // ✅ 之后如果你要把 status 写回 backend
-    // fetch(API_URL, { method: "POST", body: ... })
   }
 
-  loadOrders();
-</script>
+  async function saveSingleState(idx) {
+    const isChecked = document.getElementById(`cb-${idx}`).checked;
+    masterOrders[idx].follow_up = isChecked;
 
+    try {
+      const res = await fetch(`${API_BASE}?type=orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(masterOrders) // 全量覆盖保存状态
+      });
+      if(res.ok) {
+        document.getElementById('global-status').innerText = "Last saved: " + new Date().toLocaleTimeString();
+        setTimeout(() => document.getElementById('global-status').innerText = "", 3000);
+      }
+    } catch (e) { alert("Save failed"); }
+  }
+
+  function resetFilters() {
+    document.getElementById('date-picker').value = "";
+    renderOrders();
+  }
+
+  // --- CPQ Logic ---
+  async function fetchCPQConfig() {
+    const res = await fetch(`${API_BASE}?type=cpq`);
+    const data = await res.json();
+    document.getElementById('json-editor').value = JSON.stringify(data, null, 2);
+  }
+
+  async function updateConfig() {
+    const editor = document.getElementById('json-editor');
+    const msg = document.getElementById('config-feedback');
+    try {
+      const newJson = JSON.parse(editor.value);
+      msg.innerText = "Saving to Azure...";
+      msg.style.color = "#666";
+
+      const res = await fetch(`${API_BASE}?type=cpq`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newJson)
+      });
+
+      if(res.ok) {
+        msg.innerText = "✅ Configuration Updated Successfully!";
+        msg.style.color = "green";
+      }
+    } catch (e) {
+      alert("JSON format error! Please check commas and brackets.");
+      msg.innerText = "❌ Invalid JSON format";
+      msg.style.color = "red";
+    }
+  }
+
+  // Init load
+  fetchAllOrders();
+</script>
 </body>
 </html>
