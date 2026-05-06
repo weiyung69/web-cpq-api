@@ -5,265 +5,229 @@
   <title>CPQ Demo System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    :root { 
-      --azure-blue: #0078d4; 
-      --azure-dark: #005a9e;
-      --bg: #f3f2f1; 
-      --text: #323130;
-    }
+    :root { --azure-blue: #0078d4; --azure-dark: #005a9e; --bg: #f3f2f1; --text: #323130; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
     
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+    /* Navigation */
+    nav { background: var(--azure-dark); color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .nav-logo { font-weight: 700; font-size: 20px; }
+    .lang-btn { background: rgba(255,255,255,0.1); border: 1px solid white; color: white; padding: 5px 12px; cursor: pointer; margin-left: 5px; border-radius: 4px; font-size: 12px; }
+    .lang-btn.active { background: white; color: var(--azure-dark); }
 
-    /* --- Navigation --- */
-    nav {
-      background: var(--azure-dark);
-      color: white;
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
+    /* Layout */
+    .container { max-width: 1100px; margin: 30px auto; display: flex; gap: 25px; padding: 0 20px; flex-direction: column; }
+    @media (min-width: 850px) { .container { flex-direction: row; } }
 
-    .nav-logo { font-weight: 600; font-size: 18px; }
-    .menu-icon { display: none; cursor: pointer; font-size: 24px; }
+    /* Forms */
+    .config-card { flex: 1; background: white; padding: 30px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; color: var(--azure-blue); font-size: 18px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; color: #666; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
 
-    .lang-switcher { display: flex; gap: 8px; }
-    .lang-btn {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: white;
-      padding: 4px 10px;
-      cursor: pointer;
-      border-radius: 2px;
-      font-size: 12px;
-    }
-    .lang-btn.active { background: white; color: var(--azure-dark); border-color: white; }
-
-    /* --- Layout --- */
-    .container { 
-      max-width: 1000px; 
-      margin: 20px auto;
-      background: white; 
-      box-shadow: 0 1.6px 3.6px 0 rgba(0,0,0,0.132);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .cpq-grid { display: flex; flex-direction: column; }
-    @media (min-width: 768px) { .cpq-grid { flex-direction: row; } }
-
-    .config-section { flex: 1; padding: 25px; }
-    .summary-section { flex: 0 0 320px; background: #faf9f8; padding: 25px; border-left: 1px solid #edebe9; }
-
-    /* Mobile Menu */
-    @media (max-width: 767px) {
-      .menu-icon { display: block; }
-      .lang-switcher {
-        display: none;
-        flex-direction: column;
-        position: absolute;
-        top: 50px;
-        right: 0;
-        background: var(--azure-dark);
-        width: 100%;
-        padding: 15px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      }
-      .lang-switcher.show { display: flex; }
-      .summary-section { border-left: none; border-top: 1px solid #edebe9; }
-    }
-
-    /* Form Components */
-    h3 { margin-top: 0; border-bottom: 1px solid #edebe9; padding-bottom: 10px; font-weight: 600; }
-    label { display: block; margin-top: 18px; font-weight: 600; font-size: 14px; }
-    select, input, textarea { 
-      width: 100%; padding: 10px; margin-top: 8px; 
-      border: 1px solid #8a8886; box-sizing: border-box; 
-      border-radius: 2px; font-size: 16px;
-    }
-    .price-card { background: white; border: 1px solid #edebe9; padding: 20px; text-align: center; margin: 20px 0; }
-    .price-value { font-size: 32px; color: var(--azure-blue); font-weight: 700; }
-    .btn-submit { 
-      width: 100%; padding: 12px; background: var(--azure-blue); 
-      color: white; border: none; font-weight: 600; cursor: pointer;
-    }
-    .btn-submit:hover { background: var(--azure-dark); }
-    .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
-    .warning { color: #a4262c; background: #fed9cc; padding: 10px; font-size: 13px; margin-top: 10px; display: none; border-radius: 2px; }
-    #loading-overlay { padding: 50px; text-align: center; font-weight: bold; color: var(--azure-blue); }
+    /* Summary Card */
+    .summary-card { width: 100%; max-width: 350px; background: #fff; border-top: 5px solid var(--azure-blue); padding: 25px; border-radius: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: sticky; top: 80px; height: fit-content; }
+    .price-display { text-align: center; margin: 20px 0; }
+    .price-display .amount { font-size: 42px; font-weight: 800; color: var(--azure-blue); }
+    .perk-item { display: flex; align-items: center; font-size: 13px; margin-bottom: 8px; color: #444; }
+    .perk-item span { color: #28a745; margin-right: 8px; font-weight: bold; }
+    .btn-main { width: 100%; padding: 15px; background: var(--azure-blue); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; }
+    .btn-main:hover { background: var(--azure-dark); }
+    .warning-box { background: #fff1f0; border: 1px solid #ffa39e; padding: 10px; color: #cf1322; font-size: 12px; margin-top: 10px; display: none; border-radius: 4px; }
   </style>
 </head>
 <body>
 
 <nav>
-  <div class="nav-logo">CPQ Demo System</div>
-  <div class="menu-icon" onclick="toggleMenu()">☰</div>
-  <div class="lang-switcher" id="langMenu">
-    <button class="lang-btn active" id="btn-en" onclick="changeLang('en')">English</button>
-    <button class="lang-btn" id="btn-jp" onclick="changeLang('jp')">日本語</button>
-    <button class="lang-btn" id="btn-th" onclick="changeLang('th')">ไทย</button>
+  <div class="nav-logo">CPQ DEMO SYSTEM</div>
+  <div>
+    <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" id="btn-jp" onclick="setLang('jp')">JP</button>
+    <button class="lang-btn" id="btn-th" onclick="setLang('th')">TH</button>
   </div>
 </nav>
 
 <div class="container">
-  <div id="loading-overlay">Connecting to Azure...</div>
-  
-  <form id="cpqForm" class="cpq-grid" style="display: none;">
-    <div class="config-section">
-      <h3 id="t-title">Configuration</h3>
-      
-      <label id="t-name">Name</label>
-      <input type="text" name="name" required placeholder="Enter name">
+  <div class="config-card">
+    <h3 id="t-cust-info">Customer Details</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+      <div class="form-group">
+        <label id="t-name">Full Name *</label>
+        <input type="text" id="custName" placeholder="Name" required>
+      </div>
+      <div class="form-group">
+        <label id="t-email">Email Address *</label>
+        <input type="email" id="custEmail" placeholder="email@example.com" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label id="t-phone">Phone Number *</label>
+      <input type="tel" id="custPhone" placeholder="+66 000-000-0000" required>
+    </div>
 
+    <h3 id="t-solution" style="margin-top: 30px;">Configuration</h3>
+    <div class="form-group">
       <label id="t-category">Category</label>
-      <select id="category" name="category"></select>
-
-      <label id="t-plan">Selection</label>
-      <select id="plan" name="plan"></select>
-      
-      <label id="t-segment">Segment</label>
-      <select id="identity" name="identity"></select>
-      
-      <div id="warn" class="warning"></div>
-
-      <label id="t-notes">Notes</label>
-      <textarea name="notes" rows="2" placeholder="Special requirements..."></textarea>
+      <select id="category"></select>
     </div>
-
-    <div class="summary-section">
-      <h3 id="t-livequote">Quotation</h3>
-      <div class="price-card">
-        <div class="price-label" id="t-total">Total Amount</div>
-        <div class="price-value">฿ <span id="totalDisplay">0</span></div>
-      </div>
-      
-      <div>
-        <p><strong id="t-details">Details:</strong></p>
-        <ul id="benefits" style="font-size: 13px; color: #605e5c; padding-left: 20px;"></ul>
-      </div>
-
-      <button type="submit" class="btn-submit" id="t-submit">Submit Quote</button>
-      <p id="submit-status" style="font-size: 12px; text-align: center; margin-top: 10px; display: none;"></p>
+    <div class="form-group">
+      <label id="t-plan">Plan Selection</label>
+      <select id="plan"></select>
     </div>
-  </form>
+    <div class="form-group">
+      <label id="t-segment">Customer Segment</label>
+      <select id="identity"></select>
+    </div>
+    <div id="warn" class="warning-box"></div>
+
+    <div class="form-group">
+      <label id="t-notes">Special Requirements</label>
+      <textarea id="notes" rows="3"></textarea>
+    </div>
+  </div>
+
+  <div class="summary-card">
+    <h3 id="t-livequote">Live Quotation</h3>
+    <div class="price-display">
+      <span style="font-size: 18px;">฿</span> <span class="amount" id="totalDisplay">0</span>
+    </div>
+    <div id="benefits-list"></div>
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+    <button class="btn-main" onclick="submitAndPrint()" id="t-submit">Generate PDF Quote</button>
+  </div>
 </div>
 
 <script>
-  // ✅ 恢复为你真实的 Azure 路径
   const API_URL = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
   const CONFIG_API = API_URL + "?type=cpq";
-  const ORDER_API = API_URL + "?type=orders";
-
   let catalog = {};
   let currentLang = 'en';
 
   const uiLabels = {
-    en: { title: "Configuration", name: "Name", category: "Category", plan: "Selection", segment: "Segment", notes: "Notes", livequote: "Quotation", total: "Total", details: "Details", submit: "Submit Quote", warn: "⚠️ Weekday Special is for Junior/Senior/Ladies only.", segs: { regular: "Adult (Regular)", junior: "Junior", senior: "Senior", ladies: "Ladies" } },
-    jp: { title: "構成設定", name: "お名前", category: "区分", plan: "プラン選択", segment: "属性", notes: "備考", livequote: "お見積り", total: "合計金額", details: "プラン内容", submit: "見積もり送信", warn: "⚠️ 平日プランはジュニア・シニア・レディース限定です。", segs: { regular: "一般大人", junior: "ジュニア", senior: "シニア", ladies: "レディース" } },
-    th: { title: "การกำหนดค่า", name: "ชื่อ", category: "ประเภท", plan: "การเลือก", segment: "ลูกค้า", notes: "หมายเหตุ", livequote: "ใบเสนอราคา", total: "ยอดรวม", details: "รายละเอียด", submit: "ส่งใบเสนอราคา", warn: "⚠️ สำหรับเด็ก/ผู้สูงอายุ/สตรีเท่านั้น", segs: { regular: "ผู้ใหญ่ปกติ", junior: "เด็ก", senior: "ผู้สูงอายุ", ladies: "สตรี" } }
+    en: { 'cust-info': "Customer Information", name: "Full Name", email: "Email Address", phone: "Phone Number", solution: "Solution Config", category: "Category", plan: "Plan", segment: "Segment", notes: "Notes", livequote: "Summary", submit: "Generate PDF Quote", warn: "⚠️ Restriction: Selected segment not eligible for this rate." },
+    jp: { 'cust-info': "顧客情報", name: "お名前", email: "メールアドレス", phone: "電話番号", solution: "構成設定", category: "区分", plan: "プラン", segment: "属性", notes: "備考", livequote: "お見積り", submit: "PDF見積書を発行", warn: "⚠️ 制限：選択された区分はこの料金をご利用いただけません。" },
+    th: { 'cust-info': "ข้อมูลลูกค้า", name: "ชื่อ-นามสกุล", email: "อีเมล", phone: "เบอร์โทรศัพท์", solution: "การกำหนดค่า", category: "ประเภท", plan: "แพ็คเกจ", segment: "กลุ่มลูกค้า", notes: "หมายเหตุ", livequote: "สรุปการเสนอราคา", submit: "สร้างใบเสนอราคา PDF", warn: "⚠️ ข้อจำกัด: กลุ่มลูกค้าที่เลือกไม่สามารถใช้ราคานี้ได้" }
   };
 
   async function init() {
     try {
-      const response = await fetch(CONFIG_API);
-      if (!response.ok) throw new Error();
-      const data = await response.json();
+      const res = await fetch(CONFIG_API);
+      const data = await res.json();
       catalog = data.catalog;
-      document.getElementById('loading-overlay').style.display = 'none';
-      document.getElementById('cpqForm').style.display = 'flex';
       renderUI();
-    } catch (err) {
-      document.getElementById('loading-overlay').innerHTML = "❌ Error connecting to API.";
-    }
+    } catch (e) { console.error("Config Load Error"); }
   }
 
-  function toggleMenu() { document.getElementById('langMenu').classList.toggle('show'); }
-
-  function changeLang(lang) {
-    currentLang = lang;
-    document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`btn-${lang}`).classList.add('active');
+  function setLang(l) {
+    currentLang = l;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + l).classList.add('active');
     renderUI();
-    if(window.innerWidth < 768) document.getElementById('langMenu').classList.remove('show');
   }
 
   function renderUI() {
     const d = uiLabels[currentLang];
-    document.getElementById('t-title').innerText = d.title;
-    document.getElementById('t-name').innerText = d.name;
-    document.getElementById('t-category').innerText = d.category;
-    document.getElementById('t-plan').innerText = d.plan;
-    document.getElementById('t-segment').innerText = d.segment;
-    document.getElementById('t-notes').innerText = d.notes;
-    document.getElementById('t-livequote').innerText = d.livequote;
-    document.getElementById('t-total').innerText = d.total;
-    document.getElementById('t-details').innerText = d.details;
-    document.getElementById('t-submit').innerText = d.submit;
-    document.getElementById('warn').innerText = d.warn;
-
+    for (let id in d) {
+      const el = document.getElementById('t-' + id);
+      if (el) el.innerText = d[id];
+    }
     const catEl = document.getElementById('category');
-    const savedCat = catEl.value;
-    catEl.innerHTML = Object.keys(catalog).map(key => `<option value="${key}">${catalog[key][currentLang]}</option>`).join('');
-    if(catalog[savedCat]) catEl.value = savedCat;
-
-    const segEl = document.getElementById('identity');
-    segEl.innerHTML = Object.entries(d.segs).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
-    updatePrices();
+    const oldCat = catEl.value;
+    catEl.innerHTML = Object.keys(catalog).map(k => `<option value="${k}">${catalog[k][currentLang]}</option>`).join('');
+    if(catalog[oldCat]) catEl.value = oldCat;
+    
+    const idEl = document.getElementById('identity');
+    const segTexts = { en: ["Regular Adult", "Junior", "Senior", "Ladies"], jp: ["一般大人", "ジュニア", "シニア", "レディース"], th: ["ผู้ใหญ่ปกติ", "เด็ก", "ผู้สูงอายุ", "สตรี"] };
+    const segKeys = ["regular", "junior", "senior", "ladies"];
+    idEl.innerHTML = segKeys.map((k, i) => `<option value="${k}">${segTexts[currentLang][i]}</option>`).join('');
+    updatePricing();
   }
 
-  function updatePrices() {
+  function updatePricing() {
     const cat = document.getElementById('category').value;
     const planEl = document.getElementById('plan');
     const items = catalog[cat].items;
-    const prevPlan = planEl.value;
+    const oldPlan = planEl.value;
     planEl.innerHTML = Object.keys(items).map(k => `<option value="${k}">${k.replace(/_/g,' ').toUpperCase()}</option>`).join('');
-    if(items[prevPlan]) planEl.value = prevPlan;
-    
+    if(items[oldPlan]) planEl.value = oldPlan;
+
     const isRestricted = (cat === 'weekday' && document.getElementById('identity').value === 'regular');
     if (isRestricted) {
       document.getElementById('warn').style.display = 'block';
       document.getElementById('totalDisplay').innerText = "N/A";
     } else {
       document.getElementById('warn').style.display = 'none';
-      const price = items[planEl.value];
-      document.getElementById('totalDisplay').innerText = price ? price.toLocaleString() : "0";
+      document.getElementById('totalDisplay').innerText = items[planEl.value].toLocaleString();
     }
-    document.getElementById('benefits').innerHTML = catalog[cat].benefits.map(b => `<li>${b}</li>`).join('');
+    document.getElementById('benefits-list').innerHTML = catalog[cat].benefits.map(b => `<div class="perk-item"><span>✓</span> ${b}</div>`).join('');
   }
 
-  [document.getElementById('category'), document.getElementById('identity'), document.getElementById('plan')].forEach(el => el.addEventListener('change', updatePrices));
+  ['category', 'plan', 'identity'].forEach(id => document.getElementById(id).addEventListener('change', updatePricing));
 
-  document.getElementById('cpqForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (document.getElementById('totalDisplay').innerText === "N/A") return;
+  async function submitAndPrint() {
+    const name = document.getElementById('custName').value;
+    const total = document.getElementById('totalDisplay').innerText;
+    if (!name || total === "N/A") { alert("Please complete the form."); return; }
 
-    const btn = document.getElementById('t-submit');
-    const status = document.getElementById('submit-status');
-    btn.disabled = true;
-    status.style.display = "block";
-    status.innerText = "Sending...";
+    const quoteData = {
+      name: name, email: document.getElementById('custEmail').value, phone: document.getElementById('custPhone').value,
+      category: document.getElementById('category').value, plan: document.getElementById('plan').value,
+      totalPrice: total, notes: document.getElementById('notes').value
+    };
+    
+    fetch(API_URL + "?type=orders", { method: "POST", body: JSON.stringify(quoteData) });
 
-    const data = Object.fromEntries(new FormData(e.target).entries());
-    data.totalPrice = document.getElementById('totalDisplay').innerText;
-
-    try {
-      const res = await fetch(ORDER_API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-      if (res.ok) {
-        status.innerText = "Success ✓";
-        e.target.reset();
-        updatePrices();
-      }
-    } catch (err) {
-      status.innerText = "Error";
-    } finally {
-      btn.disabled = false;
-    }
-  });
-
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+      <head>
+        <title>Quote - ${name}</title>
+        <style>
+          body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+          .header { border-bottom: 3px solid #0078d4; padding-bottom: 20px; margin-bottom: 30px; }
+          .company-name { font-size: 22px; font-weight: bold; color: #000; text-transform: uppercase; }
+          .quote-title { font-size: 28px; color: #0078d4; font-weight: bold; margin-top: 10px; }
+          .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
+          table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+          th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #0078d4; }
+          td { padding: 15px 12px; border-bottom: 1px solid #eee; }
+          .total-row { font-size: 18px; font-weight: bold; background: #f0f7ff; }
+          .notes-section { margin-top: 30px; font-size: 13px; border-top: 1px solid #eee; padding-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company-name">CPQ DEMO CORP</div>
+          <div class="quote-title">QUOTATION</div>
+        </div>
+        <div class="info-section">
+          <div><strong>CUSTOMER:</strong><br>${quoteData.name}<br>${quoteData.email}<br>${quoteData.phone}</div>
+          <div style="text-align: right;"><strong>DATE:</strong> ${new Date().toLocaleDateString()}</div>
+        </div>
+        <table>
+          <thead><tr><th>ITEM / DESCRIPTION</th><th style="text-align: center;">PLAN</th><th style="text-align: right;">TOTAL (THB)</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>${quoteData.category.toUpperCase()}</strong></td>
+              <td style="text-align: center;">${quoteData.plan.replace(/_/g, ' ').toUpperCase()}</td>
+              <td style="text-align: right;">฿ ${quoteData.totalPrice}</td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="2" style="text-align: right;">GRAND TOTAL:</td>
+              <td style="text-align: right;">฿ ${quoteData.totalPrice}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="notes-section">
+          <strong>NOTES:</strong><br>${quoteData.notes || "N/A"}
+          <p style="margin-top: 20px;"><strong>TERMS & CONDITIONS:</strong><br>1. This quotation is valid for 30 days from the date of issue.</p>
+        </div>
+        <script>window.onload = function() { setTimeout(function() { window.print(); }, 500); };<\/script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }
   init();
 </script>
 </body>
