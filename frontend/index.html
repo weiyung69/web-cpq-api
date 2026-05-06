@@ -31,9 +31,11 @@
     .price-display .amount { font-size: 42px; font-weight: 800; color: var(--azure-blue); }
     .perk-item { display: flex; align-items: center; font-size: 13px; margin-bottom: 8px; color: #444; }
     .perk-item span { color: #28a745; margin-right: 8px; font-weight: bold; }
-    .btn-main { width: 100%; padding: 15px; background: var(--azure-blue); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; }
+    .btn-main { width: 100%; padding: 15px; background: var(--azure-blue); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 20px; transition: all 0.3s ease; }
     .btn-main:hover { background: var(--azure-dark); }
-    .warning-box { background: #fff1f0; border: 1px solid #ffa39e; padding: 10px; color: #cf1322; font-size: 12px; margin-top: 10px; display: none; border-radius: 4px; }
+    .btn-main:disabled { background: #ccc; cursor: not-allowed; opacity: 0.6; }
+    
+    .warning-box { background: #fff1f0; border: 1px solid #ffa39e; padding: 12px; color: #cf1322; font-size: 13px; margin-top: 15px; display: none; border-radius: 4px; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -78,6 +80,7 @@
       <label id="t-segment">Customer Segment</label>
       <select id="identity"></select>
     </div>
+    
     <div id="warn" class="warning-box"></div>
 
     <div class="form-group">
@@ -104,9 +107,9 @@
   let currentLang = 'en';
 
   const uiLabels = {
-    en: { 'cust-info': "Customer Information", name: "Full Name", email: "Email Address", phone: "Phone Number", solution: "Solution Config", category: "Category", plan: "Plan", segment: "Segment", notes: "Notes", livequote: "Summary", submit: "Generate PDF Quote", warn: "⚠️ Restriction: Selected segment not eligible for this rate." },
-    jp: { 'cust-info': "顧客情報", name: "お名前", email: "メールアドレス", phone: "電話番号", solution: "構成設定", category: "区分", plan: "プラン", segment: "属性", notes: "備考", livequote: "お見積り", submit: "PDF見積書を発行", warn: "⚠️ 制限：選択された区分はこの料金をご利用いただけません。" },
-    th: { 'cust-info': "ข้อมูลลูกค้า", name: "ชื่อ-นามสกุล", email: "อีเมล", phone: "เบอร์โทรศัพท์", solution: "การกำหนดค่า", category: "ประเภท", plan: "แพ็คเกจ", segment: "กลุ่มลูกค้า", notes: "หมายเหตุ", livequote: "สรุปการเสนอราคา", submit: "สร้างใบเสนอราคา PDF", warn: "⚠️ ข้อจำกัด: กลุ่มลูกค้าที่เลือกไม่สามารถใช้ราคานี้ได้" }
+    en: { 'cust-info': "Customer Information", name: "Full Name", email: "Email Address", phone: "Phone Number", solution: "Solution Config", category: "Category", plan: "Plan", segment: "Segment", notes: "Notes", livequote: "Summary", submit: "Generate PDF Quote", warn: "⚠️ Restriction: Regular Adult segment is not eligible for Weekday Special rates." },
+    jp: { 'cust-info': "顧客情報", name: "お名前", email: "メールアドレス", phone: "電話番号", solution: "構成設定", category: "区分", plan: "プラン", segment: "属性", notes: "備考", livequote: "お見積り", submit: "PDF見積書を発行", warn: "⚠️ 制限：一般大人は平日限定プランをご利用いただけません。" },
+    th: { 'cust-info': "ข้อมูลลูกค้า", name: "ชื่อ-นามสกุล", email: "อีเมล", phone: "เบอร์โทรศัพท์", solution: "การกำหนดค่า", category: "ประเภท", plan: "แพ็คเกจ", segment: "กลุ่มลูกค้า", notes: "หมายเหตุ", livequote: "สรุปการเสนอราคา", submit: "สร้างใบเสนอราคา PDF", warn: "⚠️ ข้อจำกัด: ผู้ใหญ่ปกติไม่สามารถใช้ราคานี้สำหรับโปรโมชั่นวันธรรมดาได้" }
   };
 
   async function init() {
@@ -131,6 +134,7 @@
       const el = document.getElementById('t-' + id);
       if (el) el.innerText = d[id];
     }
+    
     const catEl = document.getElementById('category');
     const oldCat = catEl.value;
     catEl.innerHTML = Object.keys(catalog).map(k => `<option value="${k}">${catalog[k][currentLang]}</option>`).join('');
@@ -152,12 +156,18 @@
     if(items[oldPlan]) planEl.value = oldPlan;
 
     const isRestricted = (cat === 'weekday' && document.getElementById('identity').value === 'regular');
+    const warnBox = document.getElementById('warn');
+    const submitBtn = document.getElementById('t-submit');
+
     if (isRestricted) {
-      document.getElementById('warn').style.display = 'block';
+      warnBox.style.display = 'block';
+      warnBox.innerText = uiLabels[currentLang].warn;
       document.getElementById('totalDisplay').innerText = "N/A";
+      submitBtn.disabled = true;
     } else {
-      document.getElementById('warn').style.display = 'none';
+      warnBox.style.display = 'none';
       document.getElementById('totalDisplay').innerText = items[planEl.value].toLocaleString();
+      submitBtn.disabled = false;
     }
     document.getElementById('benefits-list').innerHTML = catalog[cat].benefits.map(b => `<div class="perk-item"><span>✓</span> ${b}</div>`).join('');
   }
@@ -167,7 +177,17 @@
   async function submitAndPrint() {
     const name = document.getElementById('custName').value;
     const total = document.getElementById('totalDisplay').innerText;
-    if (!name || total === "N/A") { alert("Please complete the form."); return; }
+    const btn = document.getElementById('t-submit');
+
+    if (!name || total === "N/A") { 
+      alert("Please enter Customer Name."); 
+      return; 
+    }
+
+    // --- 提交反馈：开始 ---
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "Generating...";
 
     const quoteData = {
       name: name, email: document.getElementById('custEmail').value, phone: document.getElementById('custPhone').value,
@@ -175,58 +195,90 @@
       totalPrice: total, notes: document.getElementById('notes').value
     };
     
-    fetch(API_URL + "?type=orders", { method: "POST", body: JSON.stringify(quoteData) });
+    try {
+      // 提交到服务器
+      await fetch(API_URL + "?type=orders", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(quoteData) 
+      });
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-      <head>
-        <title>Quote - ${name}</title>
-        <style>
-          body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #333; line-height: 1.6; }
-          .header { border-bottom: 3px solid #0078d4; padding-bottom: 20px; margin-bottom: 30px; }
-          .company-name { font-size: 22px; font-weight: bold; color: #000; text-transform: uppercase; }
-          .quote-title { font-size: 28px; color: #0078d4; font-weight: bold; margin-top: 10px; }
-          .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
-          table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-          th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #0078d4; }
-          td { padding: 15px 12px; border-bottom: 1px solid #eee; }
-          .total-row { font-size: 18px; font-weight: bold; background: #f0f7ff; }
-          .notes-section { margin-top: 30px; font-size: 13px; border-top: 1px solid #eee; padding-top: 20px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="company-name">CPQ DEMO CORP</div>
-          <div class="quote-title">QUOTATION</div>
-        </div>
-        <div class="info-section">
-          <div><strong>CUSTOMER:</strong><br>${quoteData.name}<br>${quoteData.email}<br>${quoteData.phone}</div>
-          <div style="text-align: right;"><strong>DATE:</strong> ${new Date().toLocaleDateString()}</div>
-        </div>
-        <table>
-          <thead><tr><th>ITEM / DESCRIPTION</th><th style="text-align: center;">PLAN</th><th style="text-align: right;">TOTAL (THB)</th></tr></thead>
-          <tbody>
-            <tr>
-              <td><strong>${quoteData.category.toUpperCase()}</strong></td>
-              <td style="text-align: center;">${quoteData.plan.replace(/_/g, ' ').toUpperCase()}</td>
-              <td style="text-align: right;">฿ ${quoteData.totalPrice}</td>
-            </tr>
-            <tr class="total-row">
-              <td colspan="2" style="text-align: right;">GRAND TOTAL:</td>
-              <td style="text-align: right;">฿ ${quoteData.totalPrice}</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="notes-section">
-          <strong>NOTES:</strong><br>${quoteData.notes || "N/A"}
-          <p style="margin-top: 20px;"><strong>TERMS & CONDITIONS:</strong><br>1. This quotation is valid for 30 days from the date of issue.</p>
-        </div>
-        <script>window.onload = function() { setTimeout(function() { window.print(); }, 500); };<\/script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
+      // 弹出新窗口
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>Quotation - ${name}</title>
+          <style>
+            body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+            .header { border-bottom: 3px solid #0078d4; padding-bottom: 20px; margin-bottom: 30px; }
+            .company-name { font-size: 22px; font-weight: bold; color: #000; text-transform: uppercase; }
+            .quote-title { font-size: 28px; color: #0078d4; font-weight: bold; margin-top: 10px; }
+            .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
+            table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+            th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #0078d4; }
+            td { padding: 15px 12px; border-bottom: 1px solid #eee; }
+            .total-row { font-size: 18px; font-weight: bold; background: #f0f7ff; }
+            .notes-section { margin-top: 30px; font-size: 13px; border-top: 1px solid #eee; padding-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">CPQ DEMO CORP</div>
+            <div class="quote-title">QUOTATION</div>
+          </div>
+          <div class="info-section">
+            <div><strong>CUSTOMER:</strong><br>${quoteData.name}<br>${quoteData.email}<br>${quoteData.phone}</div>
+            <div style="text-align: right;"><strong>DATE:</strong> ${new Date().toLocaleDateString()}</div>
+          </div>
+          <table>
+            <thead><tr><th>ITEM / DESCRIPTION</th><th style="text-align: center;">PLAN</th><th style="text-align: right;">TOTAL (THB)</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>${quoteData.category.toUpperCase()}</strong></td>
+                <td style="text-align: center;">${quoteData.plan.replace(/_/g, ' ').toUpperCase()}</td>
+                <td style="text-align: right;">฿ ${quoteData.totalPrice}</td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="2" style="text-align: right;">GRAND TOTAL:</td>
+                <td style="text-align: right;">฿ ${quoteData.totalPrice}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="notes-section">
+            <strong>NOTES:</strong><br>${quoteData.notes || "N/A"}
+            <p style="margin-top: 20px;"><strong>TERMS & CONDITIONS:</strong><br>1. This quotation is valid for 30 days from the date of issue.</p>
+          </div>
+          <script>window.onload = function() { setTimeout(function() { window.print(); }, 500); };<\/script>
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+
+      // --- 提交反馈：完成 ---
+      btn.innerText = "Generated ✓";
+      btn.style.background = "#28a745";
+
+      setTimeout(() => {
+        alert("Success! Quote generated and saved.");
+        
+        // 清空重置
+        document.getElementById('custName').value = "";
+        document.getElementById('custEmail').value = "";
+        document.getElementById('custPhone').value = "";
+        document.getElementById('notes').value = "";
+        
+        btn.disabled = false;
+        btn.innerText = originalText;
+        btn.style.background = "";
+        updatePricing();
+      }, 500);
+
+    } catch (e) {
+      alert("Error saving data.");
+      btn.disabled = false;
+      btn.innerText = originalText;
+    }
   }
   init();
 </script>
