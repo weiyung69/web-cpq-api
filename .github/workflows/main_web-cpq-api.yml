@@ -66,5 +66,5 @@ jobs:
         with:
           app-name: 'web-cpq-api'
           slot-name: 'Production'
-          package: .
+          package: backend
           
