@@ -10,61 +10,62 @@
     
     /* Tabs */
     .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
-    .tab-btn { padding: 12px 25px; cursor: pointer; border: none; background: none; font-weight: 600; color: #666; }
+    .tab-btn { padding: 12px 25px; cursor: pointer; border: none; background: none; font-weight: 600; color: #666; font-size: 15px; border-bottom: 3px solid transparent; }
     .tab-btn.active { color: var(--azure-blue); border-bottom: 3px solid var(--azure-blue); }
-    .tab-panel { display: none; }
+    .tab-panel { display: none; padding-top: 10px; }
     .tab-panel.active { display: block; }
 
-    /* Toolbar */
+    /* Orders UI */
     .toolbar { display: flex; gap: 10px; align-items: center; background: #fafafa; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #eee; }
-    select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
-
-    /* Orders Table */
     table { width: 100%; border-collapse: collapse; }
     th { text-align: left; background: #f4f4f4; padding: 12px; font-size: 13px; }
-    td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-    .badge { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; }
-    .badge.done { background: #dff6dd; color: #107c10; }
-    .badge.pending { background: #fff4ce; color: #794500; }
+    td { padding: 12px; border-bottom: 1px solid #eee; }
 
-    /* CPQ Cards */
-    .cat-card { border: 1px solid #ddd; border-radius: 4px; margin-bottom: 25px; }
+    /* CPQ Strategy Cards */
+    .cat-card { border: 1px solid #ddd; border-radius: 4px; margin-bottom: 25px; background: #fff; }
     .cat-header { background: #f8f9fa; padding: 15px; border-bottom: 1px solid #ddd; }
     .cat-title { font-weight: bold; font-size: 18px; color: var(--azure-blue); }
     .restrict-box { margin-top: 10px; padding: 10px; background: #fff1f0; border-radius: 4px; border: 1px solid #ffa39e; }
     
     .item-row { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid #f0f0f0; gap: 10px; }
-    .item-name { flex: 1; font-weight: 500; }
+    .item-name { flex: 1; font-weight: 500; text-transform: uppercase; }
     .item-price { width: 150px; }
     .item-price input { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
 
-    /* Segments Section */
-    .seg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 15px; }
+    /* Segments UI */
+    .seg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
     .seg-card { border: 1px solid #eee; padding: 15px; border-radius: 4px; background: #fafafa; }
-    .seg-card input { width: 100%; margin-bottom: 5px; padding: 5px; border: 1px solid #ddd; border-radius: 3px; }
+    .seg-card input { width: 100%; margin-bottom: 8px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
 
-    .btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; font-weight: 600; }
+    .btn { padding: 8px 16px; border-radius: 4px; cursor: pointer; border: none; font-weight: 600; font-size: 14px; }
     .btn-blue { background: var(--azure-blue); color: white; }
     .btn-danger { background: white; color: var(--danger); border: 1px solid var(--danger); }
     .btn-danger:hover { background: var(--danger); color: white; }
     .btn-add { margin: 10px 15px; border: 2px dashed #ccc; background: #fafafa; width: calc(100% - 30px); color: #666; }
 
-    .save-bar { position: sticky; bottom: 0; background: white; padding: 20px; border-top: 2px solid var(--azure-blue); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); }
+    .save-bar { position: sticky; bottom: 20px; background: rgba(255,255,255,0.95); padding: 15px; border: 1px solid #ddd; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); margin-top: 30px; }
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+    .badge.done { background: #dff6dd; color: #107c10; }
+    .badge.pending { background: #fff4ce; color: #794500; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>CPQ Master Control Panel</h2>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <h2 style="margin:0;">CPQ Master Control Panel</h2>
+    <div id="api-status" style="font-size:12px; color:green;">● System Online</div>
+  </div>
 
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('orders')">Orders</button>
-    <button class="tab-btn" onclick="switchTab('catalog')">Pricing & Rules</button>
-    <button class="tab-btn" onclick="switchTab('segments')">Customer Segments</button>
+    <button class="tab-btn active" id="btn-orders" onclick="switchTab('orders')">Orders History</button>
+    <button class="tab-btn" id="btn-catalog" onclick="switchTab('catalog')">Pricing & Rules</button>
+    <button class="tab-btn" id="btn-segments" onclick="switchTab('segments')">Manage Customer Segments</button>
   </div>
 
   <div id="panel-orders" class="tab-panel active">
     <div class="toolbar">
+      <strong>Filter:</strong>
       <select id="sel-year" onchange="renderOrders()"></select>
       <select id="sel-month" onchange="renderOrders()"></select>
       <div id="order-stats" style="margin-left:auto; font-weight:bold;"></div>
@@ -82,50 +83,65 @@
   </div>
 
   <div id="panel-segments" class="tab-panel">
-    <p>Manage customer categories and their multi-language names.</p>
     <div id="segments-container" class="seg-grid"></div>
     <button class="btn btn-add" onclick="addSegment()">+ Add New Segment Type</button>
   </div>
 
   <div class="save-bar">
-    <span style="color:#666">Remember to save after any changes.</span>
-    <button class="btn btn-blue" style="padding:12px 40px;" onclick="finalSave()">SAVE TO CLOUD</button>
+    <span style="color:#666">Make sure to Save to apply changes to Frontend.</span>
+    <button class="btn btn-blue" style="padding:12px 40px;" onclick="finalSaveCPQ()">SAVE TO AZURE</button>
   </div>
 </div>
 
 <script>
   const API = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
   let orders = [];
-  let cpqData = {};
+  let cpqData = { catalog: {}, segments: {} };
 
-  // --- Common ---
+  // --- TAB 控制 ---
+  function switchTab(t) {
+    // UI 切换
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('btn-' + t).classList.add('active');
+    document.getElementById('panel-' + t).classList.add('active');
+
+    // 渲染数据
+    if (t === 'orders') renderOrders();
+    if (t === 'catalog') renderCatalog();
+    if (t === 'segments') renderSegments();
+  }
+
+  // --- 初始化数据加载 ---
   async function init() {
     initFilters();
-    await fetchOrders();
-    await fetchCPQ();
+    try {
+      // 同时抓取订单和配置
+      const [orderRes, cpqRes] = await Promise.all([
+        fetch(API + "?type=orders"),
+        fetch(API + "?type=cpq")
+      ]);
+      
+      orders = await orderRes.json();
+      cpqData = await cpqRes.json();
+
+      // 默认渲染第一个 Tab
+      renderOrders();
+    } catch (e) {
+      console.error("Data Load Error", e);
+      alert("Error loading data from Azure.");
+    }
   }
 
-  function switchTab(t) {
-    document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    document.getElementById('panel-' + t).classList.add('active');
-  }
-
-  // --- Orders ---
+  // --- 订单逻辑 ---
   function initFilters() {
     const ySel = document.getElementById('sel-year');
     const mSel = document.getElementById('sel-month');
     const now = new Date();
-    ySel.innerHTML = `<option value="all">All Years</option>`;
+    ySel.innerHTML = '<option value="all">All Years</option>';
     for(let i=2024; i<=2026; i++) ySel.innerHTML += `<option value="${i}" ${i===now.getFullYear()?'selected':''}>${i}</option>`;
     const months = ["All Months","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     mSel.innerHTML = months.map((m, i) => `<option value="${i===0?'all':String(i).padStart(2,'0')}" ${i===now.getMonth()+1?'selected':''}>${m}</option>`).join('');
-  }
-
-  async function fetchOrders() {
-    const res = await fetch(API + "?type=orders");
-    orders = await res.json();
-    renderOrders();
   }
 
   function renderOrders() {
@@ -133,11 +149,13 @@
     const m = document.getElementById('sel-month').value;
     const list = document.getElementById('order-list');
     list.innerHTML = "";
+    
     const filtered = orders.filter(o => {
       if(!o.server_time) return false;
       const [year, month] = o.server_time.split('-');
       return (y === 'all' || y === year) && (m === 'all' || m === month);
     }).reverse();
+
     document.getElementById('order-stats').innerText = `Records: ${filtered.length}`;
     filtered.forEach(o => {
       const idx = orders.indexOf(o);
@@ -151,41 +169,36 @@
       </tr>`;
     });
   }
-  async function saveOrders() { await fetch(API+"?type=orders", {method:"POST", body:JSON.stringify(orders)}); alert("Synced!"); }
 
-  // --- CPQ Logic ---
-  async function fetchCPQ() {
-    const res = await fetch(API + "?type=cpq");
-    cpqData = await res.json();
-    renderCatalog();
-    renderSegments();
+  async function saveOrders() {
+    await fetch(API+"?type=orders", { method:"POST", body:JSON.stringify(orders) });
+    alert("Order status synced.");
   }
 
-  // 1. 渲染产品目录与规则
+  // --- CPQ 管理逻辑 ---
   function renderCatalog() {
     const container = document.getElementById('catalog-container');
     container.innerHTML = "";
-    const catalog = cpqData.catalog;
-    const segments = cpqData.segments;
+    if(!cpqData.catalog) return;
 
-    for (let catKey in catalog) {
-      const cat = catalog[catKey];
+    for (let catKey in cpqData.catalog) {
+      const cat = cpqData.catalog[catKey];
       const restricted = cat.restricted || [];
       
       let html = `<div class="cat-card">
         <div class="cat-header">
           <span class="cat-title">${cat.en}</span>
           <div class="restrict-box">
-            <strong>Restricted for:</strong><br>`;
+            <strong>Restriction Policy (Block user type from buying):</strong><br>`;
       
-      // 动态生成基于 Segments 的勾选框
-      for (let sKey in segments) {
-        html += `<label style="margin-right:10px;">
-          <input type="checkbox" ${restricted.includes(sKey)?'checked':''} onchange="toggleRestrict('${catKey}', '${sKey}')"> ${segments[sKey].en}
+      // 动态生成基于 Segments 的 Checkbox
+      for (let sKey in cpqData.segments) {
+        html += `<label style="margin-right:15px; cursor:pointer;">
+          <input type="checkbox" ${restricted.includes(sKey)?'checked':''} onchange="toggleRestrict('${catKey}', '${sKey}')"> ${cpqData.segments[sKey].en}
         </label>`;
       }
 
-      html += `</div></div><div id="items-${catKey}">`;
+      html += `</div></div><div>`;
       
       for (let itemKey in cat.items) {
         html += `<div class="item-row">
@@ -194,67 +207,84 @@
           <button class="btn btn-danger" onclick="deleteItem('${catKey}', '${itemKey}')">Delete</button>
         </div>`;
       }
-      html += `</div><button class="btn btn-add" onclick="addItem('${catKey}')">+ Add New Plan</button></div>`;
+      html += `</div><button class="btn btn-add" onclick="addItem('${catKey}')">+ Add New Plan to ${cat.en}</button></div>`;
       container.innerHTML += html;
     }
   }
 
-  // 2. 渲染身份管理
   function renderSegments() {
     const container = document.getElementById('segments-container');
     container.innerHTML = "";
-    const segs = cpqData.segments;
+    if(!cpqData.segments) return;
 
-    for (let key in segs) {
+    for (let key in cpqData.segments) {
       container.innerHTML += `
         <div class="seg-card">
-          <small>Key: ${key}</small>
-          <input type="text" value="${segs[key].en}" placeholder="English" onchange="cpqData.segments['${key}'].en=this.value; renderCatalog();">
-          <input type="text" value="${segs[key].jp}" placeholder="Japanese" onchange="cpqData.segments['${key}'].jp=this.value">
-          <input type="text" value="${segs[key].th}" placeholder="Thai" onchange="cpqData.segments['${key}'].th=this.value">
-          <button class="btn btn-danger" style="width:100%; margin-top:5px;" onclick="deleteSegment('${key}')">Delete Segment</button>
+          <div style="font-size:11px; color:#888; margin-bottom:5px;">ID: ${key}</div>
+          <input type="text" value="${cpqData.segments[key].en}" placeholder="Name (English)" onchange="cpqData.segments['${key}'].en=this.value; renderCatalog();">
+          <input type="text" value="${cpqData.segments[key].jp}" placeholder="Name (Japanese)" onchange="cpqData.segments['${key}'].jp=this.value">
+          <input type="text" value="${cpqData.segments[key].th}" placeholder="Name (Thai)" onchange="cpqData.segments['${key}'].th=this.value">
+          <button class="btn btn-danger" style="width:100%; margin-top:5px; font-size:12px;" onclick="deleteSegment('${key}')">Delete Segment</button>
         </div>`;
     }
   }
 
-  // --- CPQ Actions ---
+  // --- 操作 ---
   function toggleRestrict(catKey, sKey) {
+    if(!cpqData.catalog[catKey].restricted) cpqData.catalog[catKey].restricted = [];
     const arr = cpqData.catalog[catKey].restricted;
     const idx = arr.indexOf(sKey);
     if(idx > -1) arr.splice(idx, 1); else arr.push(sKey);
-    renderCatalog();
+    renderCatalog(); 
   }
 
   function addItem(catKey) {
-    const name = prompt("Plan ID (e.g., 30_lessons):");
-    if(!name) return;
-    cpqData.catalog[catKey].items[name.toLowerCase().replace(/\s+/g,'_')] = 0;
-    renderCatalog();
-  }
-
-  function deleteItem(catKey, itemKey) {
-    if(confirm("Delete this plan?")) { delete cpqData.catalog[catKey].items[itemKey]; renderCatalog(); }
-  }
-
-  function addSegment() {
-    const key = prompt("Unique Key (e.g., student):");
-    if(!key) return;
-    cpqData.segments[key.toLowerCase()] = { en: "New Segment", jp: "", th: "" };
-    fetchCPQ(); // 重新加载以更新所有关联 UI
-  }
-
-  function deleteSegment(key) {
-    if(confirm("Delete this segment? Rules associated with it will also be removed.")) {
-      delete cpqData.segments[key];
-      fetchCPQ();
+    const id = prompt("New Plan ID (e.g., 50_lessons):");
+    if(id) {
+      cpqData.catalog[catKey].items[id.toLowerCase().replace(/\s+/g,'_')] = 0;
+      renderCatalog();
     }
   }
 
-  async function finalSave() {
-    const res = await fetch(API + "?type=cpq", { method:"POST", body:JSON.stringify(cpqData) });
-    if(res.ok) alert("CLOUD SYNC SUCCESSFUL!");
+  function deleteItem(catKey, itemKey) {
+    if(confirm("Remove this plan?")) {
+      delete cpqData.catalog[catKey].items[itemKey];
+      renderCatalog();
+    }
   }
 
+  function addSegment() {
+    const id = prompt("New Segment ID (e.g., vip):");
+    if(id) {
+      cpqData.segments[id.toLowerCase()] = { en: "New Segment", jp: "", th: "" };
+      renderSegments();
+    }
+  }
+
+  function deleteSegment(key) {
+    if(confirm("Delete this segment? Rules associated will be lost.")) {
+      delete cpqData.segments[key];
+      renderSegments();
+    }
+  }
+
+  async function finalSaveCPQ() {
+    const btn = event.target;
+    btn.innerText = "Saving...";
+    btn.disabled = true;
+    try {
+      const res = await fetch(API + "?type=cpq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cpqData)
+      });
+      if(res.ok) alert("CLOUD SYNC SUCCESSFUL!");
+    } catch (e) { alert("Save failed!"); }
+    btn.innerText = "SAVE TO AZURE";
+    btn.disabled = false;
+  }
+
+  // 执行
   init();
 </script>
 </body>
