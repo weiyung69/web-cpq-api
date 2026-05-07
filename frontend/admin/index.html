@@ -2,37 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Global CPQ Expert Admin</title>
+  <title>Global Strategy Console v2.0</title>
   <style>
-    :root { --azure-blue: #0078d4; --bg: #f3f2f1; --border: #e1dfdd; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #323130; }
-    .container { max-width: 1300px; margin: 0 auto; background: white; padding: 25px; border-radius: 2px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    :root { --azure-blue: #0078d4; --bg: #f3f2f1; --border: #e1dfdd; --danger: #d13438; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #323130; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 4px; }
     
     /* Tabs */
-    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-    .tab-btn { padding: 12px 24px; cursor: pointer; border: none; background: none; font-weight: 600; color: #666; outline: none; }
-    .tab-btn.active { color: var(--azure-blue); border-bottom: 3px solid var(--azure-blue); }
-    .tab-panel { display: none; }
+    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 25px; }
+    .tab-btn { padding: 12px 24px; cursor: pointer; border: none; background: none; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: 0.2s; }
+    .tab-btn.active { color: var(--azure-blue); border-bottom-color: var(--azure-blue); }
+    .tab-panel { display: none; animation: fadeIn 0.3s; }
     .tab-panel.active { display: block; }
 
-    /* Translation Center Table */
-    .lang-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    .lang-table th { background: #f8f9fa; text-align: left; padding: 10px; border: 1px solid var(--border); font-size: 13px; }
-    .lang-table td { padding: 8px; border: 1px solid var(--border); }
-    .lang-table input { width: 100%; padding: 5px; border: 1px solid transparent; box-sizing: border-box; }
-    .lang-table input:focus { border: 1px solid var(--azure-blue); outline: none; background: #fff; }
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { background: #f8f9fa; text-align: left; padding: 12px; border: 1px solid var(--border); font-size: 13px; }
+    td { padding: 8px; border: 1px solid var(--border); }
+    input[type="text"], input[type="number"], select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 2px; box-sizing: border-box; }
+    input:focus { border-color: var(--azure-blue); outline: none; }
 
-    /* Product Cards */
-    .cat-card { border: 1px solid var(--border); margin-bottom: 20px; padding: 15px; border-radius: 4px; }
-    .cat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #fafafa; padding: 10px; }
-    .item-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f3f3; }
+    /* Category Cards */
+    .cat-card { border: 1px solid var(--border); margin-bottom: 25px; padding: 20px; border-radius: 4px; position: relative; background: #fff; }
+    .cat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+    .item-row { display: grid; grid-template-columns: 2fr 1fr 40px; gap: 10px; margin-bottom: 8px; align-items: center; }
     
-    .btn { padding: 8px 16px; cursor: pointer; border: none; font-weight: 600; font-size: 13px; border-radius: 2px; }
+    /* Buttons */
+    .btn { padding: 10px 20px; cursor: pointer; border: none; font-weight: 600; border-radius: 2px; transition: 0.2s; }
     .btn-blue { background: var(--azure-blue); color: white; }
-    .btn-danger { background: #d13438; color: white; }
-    .btn-ghost { background: #f3f2f1; color: #323130; }
+    .btn-blue:hover { background: #005a9e; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-ghost { background: #f3f2f1; color: #323130; border: 1px solid #ccc; }
+    .btn-ghost:hover { background: #e1dfdd; }
 
-    .save-footer { position: sticky; bottom: 0; background: white; padding: 20px; border-top: 2px solid var(--azure-blue); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); }
+    .save-footer { position: sticky; bottom: 0; background: white; padding: 20px; border-top: 3px solid var(--azure-blue); display: flex; justify-content: space-between; align-items: center; margin-top: 40px; z-index: 100; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
@@ -41,147 +45,195 @@
   <h2>Global Strategy Console</h2>
   
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('langs')">1. Translation Center (改字)</button>
-    <button class="tab-btn" onclick="switchTab('cpq')">2. Product & Logic (改价/规则)</button>
-    <button class="tab-btn" onclick="switchTab('orders')">3. Orders</button>
+    <button class="tab-btn active" id="btn-tab-langs" onclick="switchTab('langs')">1. Translation Center</button>
+    <button class="tab-btn" id="btn-tab-cpq" onclick="switchTab('cpq')">2. Product Logic</button>
+    <button class="tab-btn" id="btn-tab-orders" onclick="switchTab('orders')">3. Orders</button>
   </div>
 
   <div id="panel-langs" class="tab-panel active">
-    <p style="font-size: 13px; color: #666;">Define all labels here. These "Keys" will be used in Product Configuration.</p>
     <table class="lang-table">
-      <thead>
-        <tr id="lang-header-row"><th>Translation Key</th></tr>
-      </thead>
+      <thead><tr id="lang-header"><th>Key</th></tr></thead>
       <tbody id="lang-body"></tbody>
     </table>
-    <button class="btn btn-ghost" style="margin-top:10px;" onclick="addTranslationKey()">+ Add New Label Key</button>
+    <button class="btn btn-ghost" style="margin-top:15px;" onclick="addTranslationKey()">+ Add New Label Key</button>
   </div>
 
   <div id="panel-cpq" class="tab-panel">
     <div id="cpq-container"></div>
-    <button class="btn btn-ghost" onclick="addCategory()">+ Add New Category</button>
+    <button class="btn btn-ghost" style="width:100%; padding:20px; border-style:dashed;" onclick="addCategory()">+ Add New Category</button>
   </div>
 
   <div id="panel-orders" class="tab-panel">
-    <div id="orders-container">Order List (Same as before...)</div>
+    <div id="orders-container"></div>
   </div>
 
   <div class="save-footer">
     <div>
-      <label>Managed Languages: </label>
-      <input type="text" id="supported-langs" placeholder="en,th,jp" style="padding:5px;">
+      <label style="font-size:12px; font-weight:bold;">Active Languages: </label>
+      <input type="text" id="supported-langs" style="width:200px;">
     </div>
-    <button class="btn btn-blue" style="padding:12px 40px;" onclick="saveAll()">SYNC ALL TO AZURE</button>
+    <button class="btn btn-blue" id="btn-save-all" onclick="saveAll()">SYNC ALL TO AZURE</button>
   </div>
 </div>
 
 <script>
-  const API = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
-  let cpqData = {};
+  const API = "api.php"; // 确保路径正确
+  let cpqData = { settings: { langs: [] }, catalog: {}, segments: [] };
   let langData = {};
   let orders = [];
 
   async function init() {
     try {
       const [r1, r2, r3] = await Promise.all([
-        fetch(API + "?type=cpq"),
-        fetch(API + "?type=langs"),
-        fetch(API + "?type=orders")
+        fetch(API + "?type=cpq&t=" + Date.now()),
+        fetch(API + "?type=langs&t=" + Date.now()),
+        fetch(API + "?type=orders&t=" + Date.now())
       ]);
       cpqData = await r1.json();
       langData = await r2.json();
       orders = await r3.json();
-      
-      document.getElementById('supported-langs').value = cpqData.settings.langs.join(',');
+
+      document.getElementById('supported-langs').value = (cpqData.settings && cpqData.settings.langs) ? cpqData.settings.langs.join(',') : "en,th,jp";
       renderLangs();
-    } catch(e) { alert("Load Failed"); }
+    } catch(e) { console.error("Init Error:", e); }
   }
 
   function switchTab(t) {
     document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
-    event.target.classList.add('active');
+    document.getElementById('btn-tab-' + t).classList.add('active');
     document.getElementById('panel-' + t).classList.add('active');
     if(t === 'langs') renderLangs();
     if(t === 'cpq') renderCPQ();
+    if(t === 'orders') renderOrders();
   }
 
-  // --- Translation Center Logic ---
+  // --- 1. Translation Center ---
   function renderLangs() {
-    const langs = cpqData.settings.langs;
-    const header = document.getElementById('lang-header-row');
-    header.innerHTML = '<th>Translation Key (Unique ID)</th>' + langs.map(l => `<th>${l.toUpperCase()}</th>`).join('');
+    const langs = document.getElementById('supported-langs').value.split(',').map(s => s.trim());
+    const header = document.getElementById('lang-header');
+    header.innerHTML = '<th>Key (Unique ID)</th>' + langs.map(l => `<th>${l.toUpperCase()}</th>`).join('');
 
     const body = document.getElementById('lang-body');
     body.innerHTML = "";
-    for (let key in langData) {
-      let row = `<tr><td><strong>${key}</strong></td>`;
+    Object.keys(langData).forEach(key => {
+      let row = `<tr><td><input type="text" value="${key}" onblur="renameLangKey('${key}', this.value)"></td>`;
       langs.forEach(l => {
-        row += `<td><input type="text" value="${langData[key][l] || ''}" onchange="updateLangValue('${key}','${l}',this.value)"></td>`;
+        row += `<td><input type="text" value="${langData[key][l] || ''}" onchange="langData['${key}']['${l}'] = this.value"></td>`;
       });
-      row += `</tr>`;
+      row += `<td><button class="btn-danger" onclick="deleteLangKey('${key}')">×</button></td></tr>`;
       body.innerHTML += row;
-    }
+    });
   }
 
-  function updateLangValue(key, lang, val) {
-    if(!langData[key]) langData[key] = {};
-    langData[key][lang] = val;
+  function addTranslationKey() {
+    const k = prompt("New Key Name (e.g. CAT_NEW):");
+    if(k) { langData[k] = {}; renderLangs(); }
   }
 
-  // --- Product Logic ---
+  function deleteLangKey(k) { if(confirm('Delete key?')) { delete langData[k]; renderLangs(); } }
+
+  function renameLangKey(oldK, newK) {
+    if(newK && newK !== oldK) { langData[newK] = langData[oldK]; delete langData[oldK]; renderLangs(); }
+  }
+
+  // --- 2. Product & Logic ---
   function renderCPQ() {
     const container = document.getElementById('cpq-container');
     container.innerHTML = "";
-    const catalog = cpqData.catalog;
+    if(!cpqData.catalog) cpqData.catalog = {};
 
-    for (let catKey in catalog) {
-      const cat = catalog[catKey];
-      // 这里的重点：显示翻译后的名字给管理员看
-      const displayName = langData[cat.i18n] ? langData[cat.i18n].en : cat.i18n;
-
+    Object.entries(cpqData.catalog).forEach(([id, config]) => {
+      const previewName = langData[config.i18n] ? (langData[config.i18n].en || config.i18n) : "No Translation";
+      
       let html = `
         <div class="cat-card">
           <div class="cat-header">
             <div>
-              <span style="font-weight:bold; font-size:16px;">${displayName}</span>
-              <select onchange="cpqData.catalog['${catKey}'].i18n = this.value; renderCPQ();">
-                ${Object.keys(langData).map(k => `<option value="${k}" ${k===cat.i18n?'selected':''}>${k}</option>`).join('')}
+              <strong>ID:</strong> <input type="text" value="${id}" style="width:120px;" onblur="renameCatKey('${id}', this.value)">
+              <strong>Label:</strong> 
+              <select style="width:150px;" onchange="cpqData.catalog['${id}'].i18n = this.value; renderCPQ();">
+                ${Object.keys(langData).map(k => `<option value="${k}" ${k===config.i18n?'selected':''}>${k}</option>`).join('')}
               </select>
+              <small style="color:blue">(${previewName})</small>
             </div>
-            <div>
-              <button class="btn btn-danger" onclick="deleteCat('${catKey}')">Delete Cat</button>
-            </div>
+            <button class="btn btn-danger" onclick="deleteCat('${id}')">Delete Category</button>
           </div>
-          <div class="item-list">`;
-      
-      for (let itemKey in cat.items) {
-        html += `
-          <div class="item-row">
-            <input type="text" value="${itemKey}" readonly>
-            <input type="number" value="${cat.items[itemKey]}" onchange="cpqData.catalog['${catKey}'].items['${itemKey}']=parseInt(this.value)">
-            <button onclick="deleteItem('${catKey}','${itemKey}')">×</button>
-          </div>`;
-      }
-      html += `</div><button class="btn btn-ghost" style="width:100%;" onclick="addItem('${catKey}')">+ Add Item</button></div>`;
+          <div class="item-list">
+            ${renderItems(id, config.items)}
+          </div>
+          <button class="btn btn-ghost" style="width:100%; margin-top:10px;" onclick="addItem('${id}')">+ Add Price Plan</button>
+        </div>`;
       container.innerHTML += html;
+    });
+  }
+
+  function renderItems(catId, items) {
+    if(!items) return "";
+    return Object.entries(items).map(([name, price]) => `
+      <div class="item-row">
+        <input type="text" value="${name}" placeholder="Plan Name" onblur="renameItemKey('${catId}', '${name}', this.value)">
+        <input type="number" value="${price}" placeholder="Price" onchange="cpqData.catalog['${catId}'].items['${name}'] = parseInt(this.value)">
+        <button class="btn-danger" style="height:35px" onclick="deleteItem('${catId}', '${name}')">×</button>
+      </div>
+    `).join('');
+  }
+
+  // --- Logic Helpers ---
+  function addCategory() {
+    const newId = "cat_" + Date.now().toString().slice(-4);
+    cpqData.catalog[newId] = { i18n: Object.keys(langData)[0] || "", restricted: [], items: { "basic": 0 } };
+    renderCPQ();
+  }
+
+  function deleteCat(id) { if(confirm('Delete?')) { delete cpqData.catalog[id]; renderCPQ(); } }
+
+  function renameCatKey(oldK, newK) {
+    if(newK && newK !== oldK) { cpqData.catalog[newK] = cpqData.catalog[oldK]; delete cpqData.catalog[oldK]; renderCPQ(); }
+  }
+
+  function addItem(catId) {
+    const planName = prompt("Plan Name:");
+    if(planName) { cpqData.catalog[catId].items[planName.replace(/\s/g,'_')] = 0; renderCPQ(); }
+  }
+
+  function deleteItem(catId, itemName) { delete cpqData.catalog[catId].items[itemName]; renderCPQ(); }
+
+  function renameItemKey(catId, oldItem, newItem) {
+    if(newItem && newItem !== oldItem) {
+      cpqData.catalog[catId].items[newItem] = cpqData.catalog[catId].items[oldItem];
+      delete cpqData.catalog[catId].items[oldItem];
+      renderCPQ();
     }
   }
 
-  // --- Actions ---
-  async function saveAll() {
-    // 同步语言列表设置
-    cpqData.settings.langs = document.getElementById('supported-langs').value.split(',').map(s => s.trim());
-    
-    const b1 = fetch(API + "?type=cpq", { method: "POST", body: JSON.stringify(cpqData) });
-    const b2 = fetch(API + "?type=langs", { method: "POST", body: JSON.stringify(langData) });
-    
-    await Promise.all([b1, b2]);
-    alert("System Configured & Translated! All changes live.");
+  // --- 3. Orders ---
+  function renderOrders() {
+    const container = document.getElementById('orders-container');
+    if(!orders.length) { container.innerHTML = "No orders yet."; return; }
+    let html = `<table><thead><tr><th>Time</th><th>Customer</th><th>Product</th><th>Price</th></tr></thead><tbody>`;
+    orders.reverse().forEach(o => {
+      html += `<tr><td>${o.server_time || ''}</td><td>${o.name}<br><small>${o.phone}</small></td><td>${o.category} - ${o.plan}</td><td>฿${o.totalPrice}</td></tr>`;
+    });
+    container.innerHTML = html + "</tbody></table>";
   }
 
-  function addTranslationKey() {
-    const k = prompt("New Key (e.g. CAT_WASH):");
-    if(k) { langData[k] = {}; renderLangs(); }
+  // --- Final Save ---
+  async function saveAll() {
+    const btn = document.getElementById('btn-save-all');
+    btn.innerText = "Saving..."; btn.disabled = true;
+
+    // 同步语言设置
+    cpqData.settings.langs = document.getElementById('supported-langs').value.split(',').map(s => s.trim()).filter(s => s);
+
+    try {
+      await Promise.all([
+        fetch(API + "?type=cpq", { method: "POST", body: JSON.stringify(cpqData) }),
+        fetch(API + "?type=langs", { method: "POST", body: JSON.stringify(langData) })
+      ]);
+      alert("✅ Saved Successfully!");
+      location.reload();
+    } catch(e) { alert("Save Failed"); }
+    finally { btn.innerText = "SYNC ALL TO AZURE"; btn.disabled = false; }
   }
 
   init();
