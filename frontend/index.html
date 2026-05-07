@@ -148,8 +148,15 @@
         alert(t('UI_SUCCESS') || "Success!");
     }
 
-    function printPDF(o) {
+          function printPDF(o) {
     const w = window.open('', '_blank');
+    
+    // 1. 预先获取当前语言下的翻译结果
+    const translatedCat = t(o.cat);
+    const translatedSeg = t(o.seg);
+    const translatedTotalLabel = t('UI_TOTAL') || 'TOTAL';
+    const translatedNameLabel = t('UI_NAME_LABEL') || 'Customer';
+    const translatedPhoneLabel = t('UI_PHONE_LABEL') || 'Contact';
     
     // 获取当前日期
     const today = new Date().toLocaleDateString();
@@ -160,37 +167,22 @@
             <style>
                 @page { size: A4; margin: 20mm; }
                 body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.5; }
-                
-                /* 头部：品牌与标题 */
                 .header-center { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
                 .brand-name { font-size: 28px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
                 .doc-type { font-size: 18px; color: #666; margin-top: 5px; }
-
-                /* 客户与日期信息：左右分布 */
                 .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; font-size: 14px; }
                 .customer-info { line-height: 1.8; }
                 .date-info { text-align: right; line-height: 1.8; }
                 .label { color: #888; text-transform: uppercase; font-size: 11px; font-weight: bold; }
-
-                /* 表格部分 */
                 table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
                 th { background: #f4f4f4; text-align: left; padding: 12px; border-bottom: 2px solid #ddd; font-size: 13px; }
                 td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
                 .text-right { text-align: right; }
-
-                /* 总价部分 */
                 .total-section { text-align: right; margin-top: 20px; }
                 .total-row { display: inline-block; width: 250px; }
-                .total-label { font-size: 14px; color: #666; }
                 .total-amount { font-size: 22px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; margin-top: 10px; }
-
-                /* 条款部分 */
                 .terms { margin-top: 60px; font-size: 11px; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
                 .terms-title { font-weight: bold; color: #333; margin-bottom: 5px; text-transform: uppercase; }
-
-                @media print {
-                    .no-print { display: none; }
-                }
             </style>
         </head>
         <body>
@@ -201,16 +193,14 @@
 
             <div class="info-section">
                 <div class="customer-info">
-                    <div class="label">Customer</div>
+                    <div class="label">${translatedNameLabel}</div>
                     <strong>${o.name}</strong><br>
-                    <div class="label" style="margin-top:10px;">Contact</div>
+                    <div class="label" style="margin-top:10px;">${translatedPhoneLabel}</div>
                     ${o.phone || '-'}
                 </div>
                 <div class="date-info">
                     <div class="label">Date</div>
-                    ${today}<br>
-                    <div class="label" style="margin-top:10px;">Quote No.</div>
-                    QT-${Date.now().toString().slice(-6)}
+                    ${today}
                 </div>
             </div>
 
@@ -224,8 +214,8 @@
                 <tbody>
                     <tr>
                         <td>
-                            <strong>${t(o.cat)}</strong><br>
-                            <small style="color:#666">${t(o.seg)} Plan</small>
+                            <strong>${translatedCat}</strong><br>
+                            <small style="color:#666">${translatedSeg} Plan</small>
                         </td>
                         <td class="text-right">${o.price}</td>
                     </tr>
@@ -234,13 +224,9 @@
 
             <div class="total-section">
                 <div class="total-row">
-                    <div style="display:flex; justify-content: space-between;">
-                        <span class="total-label">Subtotal</span>
-                        <span>${o.price}</span>
-                    </div>
                     <div class="total-amount">
                         <div style="display:flex; justify-content: space-between;">
-                            <span>TOTAL</span>
+                            <span>${translatedTotalLabel}</span>
                             <span>${o.price}</span>
                         </div>
                     </div>
@@ -257,7 +243,6 @@
             <script>
                 window.onload = function() { 
                     window.print(); 
-                    // setTimeout(function(){ window.close(); }, 500); 
                 };
             <\/script>
         </body>
