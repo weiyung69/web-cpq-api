@@ -149,24 +149,122 @@
     }
 
     function printPDF(o) {
-        const w = window.open('', '_blank');
-        w.document.write(`
-            <html><head><style>
-                body { font-family: 'Segoe UI', sans-serif; padding: 50px; }
-                .h { border-bottom: 2px solid var(--primary); padding-bottom: 20px; display: flex; justify-content: space-between; }
-                .item { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; }
-                .total { text-align: right; font-size: 28px; margin-top: 40px; font-weight: bold; }
-            </style></head><body>
-                <div class="h"><div><strong>${db.cpq.settings.brand_name}</strong></div><div>${o.date.split('T')[0]}</div></div>
-                <div class="item"><span>${t('UI_NAME_LABEL')}</span><span>${o.name} (${o.phone})</span></div>
-                <div class="item"><span>${t('UI_SELECT_TYPE')}</span><span>${t(o.seg)}</span></div>
-                <div class="item"><span>${t('UI_SELECT_PLAN')}</span><span>${t(o.cat)}</span></div>
-                <div class="total">${t('UI_TOTAL')}: ${o.price}</div>
-                <script>window.onload=function(){window.print();}<\/script>
-            </body></html>
-        `);
-        w.document.close();
-    }
+    const w = window.open('', '_blank');
+    
+    // 获取当前日期
+    const today = new Date().toLocaleDateString();
+    
+    w.document.write(`
+        <html>
+        <head>
+            <style>
+                @page { size: A4; margin: 20mm; }
+                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.5; }
+                
+                /* 头部：品牌与标题 */
+                .header-center { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                .brand-name { font-size: 28px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; }
+                .doc-type { font-size: 18px; color: #666; margin-top: 5px; }
+
+                /* 客户与日期信息：左右分布 */
+                .info-section { display: flex; justify-content: space-between; margin-bottom: 40px; font-size: 14px; }
+                .customer-info { line-height: 1.8; }
+                .date-info { text-align: right; line-height: 1.8; }
+                .label { color: #888; text-transform: uppercase; font-size: 11px; font-weight: bold; }
+
+                /* 表格部分 */
+                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                th { background: #f4f4f4; text-align: left; padding: 12px; border-bottom: 2px solid #ddd; font-size: 13px; }
+                td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+                .text-right { text-align: right; }
+
+                /* 总价部分 */
+                .total-section { text-align: right; margin-top: 20px; }
+                .total-row { display: inline-block; width: 250px; }
+                .total-label { font-size: 14px; color: #666; }
+                .total-amount { font-size: 22px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; margin-top: 10px; }
+
+                /* 条款部分 */
+                .terms { margin-top: 60px; font-size: 11px; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
+                .terms-title { font-weight: bold; color: #333; margin-bottom: 5px; text-transform: uppercase; }
+
+                @media print {
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header-center">
+                <div class="brand-name">${db.cpq.settings.brand_name}</div>
+                <div class="doc-type">QUOTATION</div>
+            </div>
+
+            <div class="info-section">
+                <div class="customer-info">
+                    <div class="label">Customer</div>
+                    <strong>${o.name}</strong><br>
+                    <div class="label" style="margin-top:10px;">Contact</div>
+                    ${o.phone || '-'}
+                </div>
+                <div class="date-info">
+                    <div class="label">Date</div>
+                    ${today}<br>
+                    <div class="label" style="margin-top:10px;">Quote No.</div>
+                    QT-${Date.now().toString().slice(-6)}
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>DESCRIPTION</th>
+                        <th class="text-right">AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <strong>${t(o.cat)}</strong><br>
+                            <small style="color:#666">${t(o.seg)} Plan</small>
+                        </td>
+                        <td class="text-right">${o.price}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="total-section">
+                <div class="total-row">
+                    <div style="display:flex; justify-content: space-between;">
+                        <span class="total-label">Subtotal</span>
+                        <span>${o.price}</span>
+                    </div>
+                    <div class="total-amount">
+                        <div style="display:flex; justify-content: space-between;">
+                            <span>TOTAL</span>
+                            <span>${o.price}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="terms">
+                <div class="terms-title">Terms & Conditions</div>
+                1. This quotation is valid for 30 days from the date of issue.<br>
+                2. Full payment is required before the commencement of the service.<br>
+                3. Please contact us for any further clarification regarding this quote.
+            </div>
+
+            <script>
+                window.onload = function() { 
+                    window.print(); 
+                    // setTimeout(function(){ window.close(); }, 500); 
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    w.document.close();
+}
 
     init();
 </script>
