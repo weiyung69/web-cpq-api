@@ -1,202 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dynamic CPQ System</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    :root { --azure-blue: #0078d4; --azure-dark: #005a9e; --bg: #f3f2f1; --text: #323130; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
-    
-    /* Navbar & Lang Switcher */
-    nav { background: var(--azure-dark); color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; }
-    .lang-btn { background: rgba(255,255,255,0.1); border: 1px solid white; color: white; padding: 5px 15px; cursor: pointer; margin-left: 5px; border-radius: 4px; text-transform: uppercase; font-weight: 600; }
-    .lang-btn.active { background: white; color: var(--azure-dark); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instant Quote System</title>
+    <style>
+        :root { --primary: #0078d4; --bg: #f3f2f1; }
+        body { font-family: -apple-system, 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #333; }
+        .app-container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        
+        .brand { text-align: center; font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 25px; }
+        
+        /* 语言切换器 */
+        .lang-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 25px; }
+        .lang-btn { border: 1px solid #ddd; background: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: 0.2s; }
+        .lang-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(0,120,212,0.3); }
 
-    .container { max-width: 1000px; margin: 30px auto; display: flex; gap: 20px; padding: 0 15px; flex-wrap: wrap; }
-    .card { background: white; padding: 25px; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex: 1; min-width: 320px; }
-    
-    /* Form UI */
-    .form-group { margin-bottom: 20px; }
-    label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 8px; color: #666; }
-    select, input, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 15px; }
-    
-    /* Price Display */
-    .summary-card { width: 320px; background: white; border-top: 4px solid var(--azure-blue); padding: 25px; height: fit-content; position: sticky; top: 20px; }
-    .total-price { font-size: 48px; font-weight: 800; color: var(--azure-blue); text-align: center; margin: 15px 0; }
-    .benefit-item { display: flex; align-items: center; font-size: 14px; margin-bottom: 8px; }
-    .benefit-item span { color: #107c10; margin-right: 8px; font-weight: bold; }
+        .section-title { font-size: 14px; font-weight: bold; margin: 25px 0 12px; display: flex; align-items: center; }
+        .section-title::after { content: ""; flex: 1; height: 1px; background: #eee; margin-left: 10px; }
 
-    .btn-submit { width: 100%; padding: 16px; background: var(--azure-blue); color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: 700; cursor: pointer; }
-    .btn-submit:disabled { background: #edebe9; color: #a19f9d; cursor: not-allowed; }
-    
-    .error-msg { background: #fde7e9; border: 1px solid #e81123; color: #a4262c; padding: 10px; border-radius: 4px; font-size: 13px; display: none; margin-top: 10px; }
-  </style>
+        /* 选项卡片 */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .card { border: 2px solid #f0f0f0; padding: 16px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; background: #fafafa; }
+        .card:hover { border-color: #ddd; }
+        .card.active { border-color: var(--primary); background: #f0f7ff; color: var(--primary); font-weight: bold; transform: translateY(-2px); }
+
+        /* 输入框 */
+        input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        input:focus { border-color: var(--primary); outline: none; }
+
+        /* 价格展示 */
+        .footer-price { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .total-label { font-size: 14px; color: #666; }
+        .price-val { font-size: 24px; font-weight: 800; color: #000; }
+
+        .submit-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; transition: 0.3s; }
+        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
 </head>
 <body>
 
-<nav>
-  <div style="font-weight: 700; font-size: 18px;">CPQ ENGINE v2.0</div>
-  <div id="lang-switcher">
-    </div>
-</nav>
+<div class="app-container">
+    <div id="brand" class="brand">--</div>
 
-<div class="container">
-  <div class="card">
-    <h3 id="ui-customer-info">Customer Details</h3>
-    <div class="form-group">
-      <input type="text" id="custName" placeholder="Name" required>
-    </div>
-    <div class="form-group">
-      <input type="tel" id="custPhone" placeholder="Phone" required>
+    <div class="lang-bar" id="langs"></div>
+
+    <div class="section-title" id="t-info">Personal Info</div>
+    <input type="text" id="cust-name" placeholder="...">
+    <div style="margin-top:10px">
+        <input type="text" id="cust-phone" placeholder="Phone Number">
     </div>
 
-    <h3 id="ui-solution" style="margin-top:40px;">Configuration</h3>
-    <div class="form-group">
-      <label id="ui-category">Category</label>
-      <select id="sel-cat" onchange="renderPlans()"></select>
-    </div>
-    <div class="form-group">
-      <label id="ui-plan">Select Plan</label>
-      <select id="sel-plan" onchange="updateUI()"></select>
-    </div>
-    <div class="form-group">
-      <label id="ui-segment">Your Identity</label>
-      <select id="sel-seg" onchange="updateUI()"></select>
-    </div>
-    
-    <div id="policy-error" class="error-msg"></div>
-  </div>
+    <div class="section-title" id="t-seg">Identity</div>
+    <div class="grid" id="seg-grid"></div>
 
-  <div class="summary-card">
-    <h3 id="ui-summary">Summary</h3>
-    <div class="total-price">฿<span id="price-val">0</span></div>
-    <div id="benefit-box"></div>
-    <button class="btn-submit" id="btn-submit" onclick="submitOrder()">Generate Quote</button>
-  </div>
+    <div class="section-title" id="t-cat">Service</div>
+    <div class="grid" id="cat-grid"></div>
+
+    <div class="footer-price">
+        <div class="total-label" id="t-total">Total Price</div>
+        <div class="price-val" id="display-price">--</div>
+    </div>
+
+    <button class="submit-btn" id="btn-submit" onclick="doSubmit()" disabled>Submit</button>
 </div>
 
 <script>
-  const API = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
-  let cpqData = {};
-  let langData = {};
-  let currentLang = 'en';
+    const API = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
+    let data = { cpq: null, langs: null };
+    let state = { lang: 'en', seg: null, cat: null };
 
-  // 1. 初始化：并发读取两个 JSON
-  async function init() {
-    try {
-      const [r1, r2] = await Promise.all([
-        fetch(API + "?type=cpq"),
-        fetch(API + "?type=langs")
-      ]);
-      cpqData = await r1.json();
-      langData = await r2.json();
-      
-      renderLangSwitcher();
-      renderCategories();
-      renderSegments();
-    } catch (e) { console.error("Load Error"); }
-  }
-
-  // 2. 翻译翻译函数 (Translation Helper)
-  function t(key) {
-    if (!langData[key]) return key;
-    return langData[key][currentLang] || langData[key]['en'] || key;
-  }
-
-  // 3. 动态生成语言切换按钮
-  function renderLangSwitcher() {
-    const box = document.getElementById('lang-switcher');
-    box.innerHTML = cpqData.settings.langs.map(l => 
-      `<button class="lang-btn ${l===currentLang?'active':''}" onclick="setLang('${l}')">${l}</button>`
-    ).join('');
-  }
-
-  function setLang(l) {
-    currentLang = l;
-    renderLangSwitcher();
-    renderCategories(); // 重新渲染下拉菜单的文字
-    renderSegments();
-  }
-
-  // 4. 渲染分类
-  function renderCategories() {
-    const el = document.getElementById('sel-cat');
-    const prev = el.value;
-    el.innerHTML = Object.keys(cpqData.catalog).map(key => 
-      `<option value="${key}" ${key===prev?'selected':''}>${t(cpqData.catalog[key].i18n)}</option>`
-    ).join('');
-    renderPlans();
-  }
-
-  // 5. 渲染身份
-  function renderSegments() {
-    const el = document.getElementById('sel-seg');
-    const prev = el.value;
-    el.innerHTML = cpqData.segments.map(sKey => 
-      `<option value="${sKey}" ${sKey===prev?'selected':''}>${t(sKey)}</option>`
-    ).join('');
-    updateUI();
-  }
-
-  // 6. 渲染子项目 (Plans)
-  function renderPlans() {
-    const catKey = document.getElementById('sel-cat').value;
-    const el = document.getElementById('sel-plan');
-    const items = cpqData.catalog[catKey].items;
-    el.innerHTML = Object.keys(items).map(k => 
-      `<option value="${k}">${k.replace(/_/g,' ').toUpperCase()}</option>`
-    ).join('');
-    updateUI();
-  }
-
-  // 7. 更新价格、规则和权益
-  function updateUI() {
-    const catKey = document.getElementById('sel-cat').value;
-    const planKey = document.getElementById('sel-plan').value;
-    const segKey = document.getElementById('sel-seg').value;
-    const catData = cpqData.catalog[catKey];
-
-    // 检查限制规则
-    const isRestricted = catData.restricted.includes(segKey);
-    const errBox = document.getElementById('policy-error');
-    const btn = document.getElementById('btn-submit');
-
-    if (isRestricted) {
-      errBox.innerText = "⚠️ This package is not available for your selected segment.";
-      errBox.style.display = 'block';
-      document.getElementById('price-val').innerText = "---";
-      btn.disabled = true;
-    } else {
-      errBox.style.display = 'none';
-      btn.disabled = false;
-      const price = catData.items[planKey] || 0;
-      document.getElementById('price-val').innerText = price.toLocaleString();
+    async function init() {
+        const t = Date.now();
+        const [r1, r2] = await Promise.all([
+            fetch(`${API}?type=cpq&t=${t}`),
+            fetch(`${API}?type=langs&t=${t}`)
+        ]);
+        data.cpq = await r1.json();
+        data.langs = await r2.json();
+        
+        state.lang = data.cpq.settings.langs[0];
+        renderLangs();
+        updateUI();
     }
 
-    // 渲染权益
-    const benefits = catData.benefits || [];
-    document.getElementById('benefit-box').innerHTML = benefits.map(b => 
-      `<div class="benefit-item"><span>✓</span> ${b}</div>`
-    ).join('');
-  }
+    // 翻译函数
+    function t(key) {
+        return (data.langs[key] && data.langs[key][state.lang]) ? data.langs[key][state.lang] : key;
+    }
 
-  async function submitOrder() {
-    const data = {
-      name: document.getElementById('custName').value,
-      phone: document.getElementById('custPhone').value,
-      category: t(cpqData.catalog[document.getElementById('sel-cat').value].i18n),
-      plan: document.getElementById('sel-plan').value,
-      totalPrice: document.getElementById('price-val').innerText
-    };
-    if(!data.name) return alert("Enter Name");
-    
-    await fetch(API + "?type=orders", { method:"POST", body:JSON.stringify(data) });
-    alert("Quotation saved! Opening PDF...");
-    // 此处可接 PDF 生成逻辑
-  }
+    function renderLangs() {
+        document.getElementById('langs').innerHTML = data.cpq.settings.langs.map(l => 
+            `<button class="lang-btn ${l===state.lang?'active':''}" onclick="changeLang('${l}')">${l.toUpperCase()}</button>`
+        ).join('');
+    }
 
-  init();
+    function changeLang(l) {
+        state.lang = l;
+        renderLangs();
+        updateUI();
+    }
+
+    function updateUI() {
+        // 1. 静态文字
+        document.getElementById('brand').innerText = data.cpq.settings.brand_name;
+        document.getElementById('t-info').innerText = t('UI_NAME_LABEL');
+        document.getElementById('cust-name').placeholder = t('UI_NAME_LABEL');
+        document.getElementById('cust-phone').placeholder = t('UI_PHONE_LABEL');
+        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE');
+        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN');
+        document.getElementById('t-total').innerText = t('UI_TOTAL');
+        document.getElementById('btn-submit').innerText = t('UI_SUBMIT');
+
+        // 2. 渲染 Segments (从 catalog 里提取所有用到的 SEG_ 标签)
+        const segSet = new Set();
+        Object.values(data.cpq.catalog).forEach(p => {
+            p.segments.filter(s => s.startsWith('SEG_')).forEach(s => segSet.add(s));
+        });
+        document.getElementById('seg-grid').innerHTML = Array.from(segSet).map(s => `
+            <div class="card ${state.seg===s?'active':''}" onclick="select('seg', '${s}')">${t(s)}</div>
+        `).join('');
+
+        // 3. 渲染 Categories (只显示符合当前所选 SEG 的产品)
+        const availableProds = Object.values(data.cpq.catalog).filter(p => 
+            !state.seg || p.segments.includes(state.seg)
+        );
+        document.getElementById('cat-grid').innerHTML = availableProds.map(p => `
+            <div class="card ${state.cat===p.i18n?'active':''}" onclick="select('cat', '${p.i18n}')">${t(p.i18n)}</div>
+        `).join('');
+
+        calcPrice();
+    }
+
+    function select(type, val) {
+        state[type] = val;
+        if(type === 'seg') state.cat = null; // 切换人群时重置产品
+        updateUI();
+    }
+
+    function calcPrice() {
+        const display = document.getElementById('display-price');
+        const btn = document.getElementById('btn-submit');
+        
+        if(state.seg && state.cat) {
+            const prod = Object.values(data.cpq.catalog).find(p => 
+                p.i18n === state.cat && p.segments.includes(state.seg)
+            );
+            if(prod) {
+                // 默认取第一个价格槽
+                const firstPrice = Object.values(prod.items)[0];
+                display.innerText = data.cpq.settings.currency + " " + firstPrice.toLocaleString();
+                btn.disabled = false;
+                return;
+            }
+        }
+        display.innerText = "--";
+        btn.disabled = true;
+    }
+
+    async function doSubmit() {
+        const name = document.getElementById('cust-name').value;
+        if(!name) return alert("Please enter your name");
+
+        const order = {
+            name: name,
+            phone: document.getElementById('cust-phone').value,
+            seg: state.seg,
+            cat: state.cat,
+            price: document.getElementById('display-price').innerText,
+            date: new Date().toISOString()
+        };
+
+        const btn = document.getElementById('btn-submit');
+        btn.disabled = true;
+        btn.innerText = "...";
+
+        await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
+        alert(t('UI_SUCCESS') || "Submitted!");
+        location.reload();
+    }
+
+    init();
 </script>
 </body>
 </html>
