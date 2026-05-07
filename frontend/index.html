@@ -130,29 +130,34 @@
         btn.disabled = true;
     }
 
-    async function doSubmit() {
-    // 找到当前选中的产品对象，用来抓取具体的 Item 名字
+async function doSubmit() {
+    // 获取姓名和电话
+    const name = document.getElementById('cust-name').value;
+    const phone = document.getElementById('cust-phone').value;
+
+    if(!name || !phone) return alert("Please fill in Name and Contact");
+
+    // 获取当前选中的产品对象，用来抓取具体的 Price Slot 名字
     const prod = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat && p.segments.includes(state.seg));
-    const itemName = prod ? Object.keys(prod.items)[0] : ""; // 拿到第一个 Price Slot 的名字
+    const itemName = prod ? Object.keys(prod.items)[0] : ""; 
 
     const order = {
-        name: document.getElementById('cust-name').value,
-        phone: document.getElementById('cust-phone').value, // 确保存入电话
-        seg: t(state.seg), // 存入翻译后的身份文字
-        cat: t(state.cat) + (itemName ? " (" + itemName + ")" : ""), // 存入翻译后的产品+具体项目名
+        name: name,
+        phone: phone,
+        // --- 核心修改：使用 t() 函数进行翻译后再存储 ---
+        seg: t(state.seg),             // 存入 "Adult Plan" 或 "Youth Plan"
+        cat: t(state.cat) + (itemName ? ` (${itemName})` : ""), // 存入 "Personal Class (Standard)"
         price: document.getElementById('display-price').innerText,
-        status: "pending", // 初始状态：待跟进
+        status: "pending",             // 初始状态为红色
         date: new Date().toISOString()
     };
 
-    if(!order.name || !order.phone) return alert("Please enter name and contact");
-
-    // 1. 打印
+    // 1. 打印预览 (传入的是翻译后的对象)
     printPDF(order);
     
-    // 2. 存入后台 (这里会发送完整的 order 对象，包含 phone 和 status)
+    // 2. 存入后台
     await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
-    alert(t('UI_SUCCESS') || "Success!");
+    alert(t('UI_SUCCESS') || "Submitted Successfully!");
 }
 
           function printPDF(o) {
