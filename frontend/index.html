@@ -131,22 +131,29 @@
     }
 
     async function doSubmit() {
-        const order = {
-            name: document.getElementById('cust-name').value,
-            phone: document.getElementById('cust-phone').value,
-            seg: state.seg, cat: state.cat,
-            price: document.getElementById('display-price').innerText,
-            date: new Date().toISOString()
-        };
-        if(!order.name) return alert("Please enter name");
+    // 找到当前选中的产品对象，用来抓取具体的 Item 名字
+    const prod = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat && p.segments.includes(state.seg));
+    const itemName = prod ? Object.keys(prod.items)[0] : ""; // 拿到第一个 Price Slot 的名字
 
-        // 1. 生成并打印预览
-        printPDF(order);
-        
-        // 2. 异步存入后台
-        await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
-        alert(t('UI_SUCCESS') || "Success!");
-    }
+    const order = {
+        name: document.getElementById('cust-name').value,
+        phone: document.getElementById('cust-phone').value, // 确保存入电话
+        seg: t(state.seg), // 存入翻译后的身份文字
+        cat: t(state.cat) + (itemName ? " (" + itemName + ")" : ""), // 存入翻译后的产品+具体项目名
+        price: document.getElementById('display-price').innerText,
+        status: "pending", // 初始状态：待跟进
+        date: new Date().toISOString()
+    };
+
+    if(!order.name || !order.phone) return alert("Please enter name and contact");
+
+    // 1. 打印
+    printPDF(order);
+    
+    // 2. 存入后台 (这里会发送完整的 order 对象，包含 phone 和 status)
+    await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
+    alert(t('UI_SUCCESS') || "Success!");
+}
 
           function printPDF(o) {
     const w = window.open('', '_blank');

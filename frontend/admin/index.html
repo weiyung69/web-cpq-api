@@ -187,23 +187,69 @@
     }
 
     function renderOrders() {
-        const y = document.getElementById('sel-year').value;
-        const m = document.getElementById('sel-month').value.padStart(2, '0');
-        const container = document.getElementById('orders-list');
-        let sum = 0;
-        
-        const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`));
-        if(filtered.length === 0) {
-            container.innerHTML = "<p style='text-align:center;color:#999;padding:20px;'>No data for selected period.</p>";
-        } else {
-            container.innerHTML = `<table><thead><tr><th>Date</th><th>Customer</th><th>SEG</th><th>CAT</th><th>Price</th></tr></thead><tbody>
-                ${filtered.map(o => {
-                    sum += parseFloat(o.price.replace(/[^0-9.]/g,'')) || 0;
-                    return `<tr><td>${o.date.split('T')[0]}</td><td>${o.name}</td><td>${o.seg}</td><td>${o.cat}</td><td>${o.price}</td></tr>`;
-                }).join('')}</tbody></table>`;
-        }
-        document.getElementById('month-total').innerText = cpq.settings.currency + " " + sum.toLocaleString();
-    }
+    const y = document.getElementById('sel-year').value;
+    const m = document.getElementById('sel-month').value.padStart(2, '0');
+    const container = document.getElementById('orders-list');
+    let sum = 0;
+    
+    // 过滤当月订单
+    const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`));
+
+    container.innerHTML = `<table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Customer / Contact</th>
+                <th>Identity</th>
+                <th>Product Description</th>
+                <th>Price</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${filtered.map((o, idx) => {
+                sum += parseFloat(o.price.replace(/[^0-9.]/g,'')) || 0;
+                
+                // 状态逻辑：如果 status 是 followed 就绿，否则红
+                const isFollowed = o.status === 'followed';
+                const btnStyle = isFollowed ? 'background:#28a745;color:white;' : 'background:#dc3545;color:white;';
+                const btnText = isFollowed ? 'Followed Up' : 'Pending Follow-up';
+                
+                return `<tr>
+                    <td>${o.date.split('T')[0]}</td>
+                    <td>
+                        <strong>${o.name}</strong><br>
+                        <small style="color:blue;">${o.phone || 'No Contact'}</small>
+                    </td>
+                    <td>${o.seg}</td>
+                    <td>${o.cat}</td>
+                    <td style="font-weight:bold;">${o.price}</td>
+                    <td>
+                        <button class="btn" style="${btnStyle} font-size:11px; width:140px; border:none; padding:5px; border-radius:4px; cursor:pointer;" 
+                                onclick="toggleOrderStatus(${orders.indexOf(o)})">
+                            ${btnText}
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('')}
+        </tbody>
+    </table>`;
+    document.getElementById('month-total').innerText = cpq.settings.currency + " " + sum.toLocaleString();
+}
+
+// 状态切换函数：点击后变色并自动保存
+async function toggleOrderStatus(originalIndex) {
+    const order = orders[originalIndex];
+    order.status = (order.status === 'followed') ? 'pending' : 'followed';
+    
+    renderOrders(); // 立即刷新界面颜色
+
+    // 同时也把整个更新后的 orders 数组同步回 Azure
+    await fetch(`${API_URL}?type=orders`, { 
+        method: "POST", 
+        body: JSON.stringify(orders) 
+    });
+}
 
     // --- UTILS ---
     function addProd() { const id = "p_"+Date.now().toString().slice(-4); cpq.catalog[id]={i18n:"",sort:9,segments:[],items:{"Standard":0}}; renderCatalog(); }
