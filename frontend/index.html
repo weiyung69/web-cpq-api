@@ -26,7 +26,6 @@
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 30px; }
         
-        /* ✨ Card 样式升级：支持图标与文字分离 */
         .card { border: 1px solid #8a8886; padding: 15px; border-radius: 2px; text-align: center; cursor: pointer; background: white; transition: 0.2s; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 110px; }
         .card:hover { background: #f3f2f1; border-color: #323130; }
         .card.active { border: 2px solid var(--azure-blue); background: #eff6fc; }
@@ -69,7 +68,7 @@
     <div class="panel">
         <div class="step-row"><div class="step-badge">1</div><div class="section-title" id="t-info">Client Info</div></div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <input type="text" id="cust-name" onplaceholder="updatePlaceholder('UI_NAME_LABEL', this)">
+            <input type="text" id="cust-name">
             <input type="text" id="cust-phone" inputmode="tel">
         </div>
         <input type="email" id="cust-email">
@@ -133,12 +132,19 @@
 
     function t(key, fb) { return (db.langs[key] && db.langs[key][state.lang]) ? db.langs[key][state.lang] : (fb || key); }
     
-    // ✨ 新增渲染函数：处理 Emoji 拆分
-    function createCardHTML(id, isActive, clickFn) {
-        const fullText = t(id);
-        const parts = fullText.split(' ');
-        const emoji = parts[0]; 
-        const label = parts.slice(1).join(' ');
+    // ✨ 智能渲染函数：带 Emoji 识别与默认补全逻辑
+    function createCardHTML(text, isActive, clickFn) {
+        // 正则表达式：识别字符串开头的 Emoji
+        const emojiRegex = /^(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/;
+        
+        let emoji = "😊"; // 默认兜底图标
+        let label = text;
+
+        if (emojiRegex.test(text)) {
+            const parts = text.split(' ');
+            emoji = parts[0];
+            label = parts.slice(1).join(' ');
+        }
 
         return `
             <div class="card ${isActive ? 'active' : ''}" onclick="${clickFn}">
@@ -153,41 +159,47 @@
 
     function updateUI() {
         document.getElementById('brand-text').innerText = db.cpq.settings.brand_name;
-        document.getElementById('t-info').innerText = t('UI_NAME_LABEL');
-        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN');
-        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE');
-        document.getElementById('t-total-label').innerText = t('UI_TOTAL');
-        document.getElementById('t-submit-btn').innerText = t('UI_SUBMIT');
         
-        // 更新 Input Placeholder (带 Emoji)
+        // 标题与 Label 逻辑
+        const getLabel = (key) => {
+            const raw = t(key);
+            return raw.split(' ').slice(1).join(' ') || raw;
+        };
+
+        document.getElementById('t-info').innerText = getLabel('UI_NAME_LABEL');
+        document.getElementById('t-cat').innerText = getLabel('UI_SELECT_PLAN');
+        document.getElementById('t-seg').innerText = getLabel('UI_SELECT_TYPE');
+        document.getElementById('t-total-label').innerText = getLabel('UI_TOTAL');
+        document.getElementById('t-submit-btn').innerText = getLabel('UI_SUBMIT');
+        
         document.getElementById('cust-name').placeholder = t('UI_NAME_LABEL');
         document.getElementById('cust-phone').placeholder = t('UI_PHONE_LABEL');
         document.getElementById('cust-email').placeholder = t('UI_EMAIL_LABEL');
         
-        // 渲染 CAT & SEG Grids (使用新拆分逻辑)
+        // Step 2 & 3 Grid
         document.getElementById('cat-grid').innerHTML = Object.values(db.cpq.catalog).sort((a,b)=>a.sort-b.sort).map(p => 
-            createCardHTML(p.i18n, state.cat === p.i18n, `select('cat', '${p.i18n}')`)
+            createCardHTML(t(p.i18n), state.cat === p.i18n, `select('cat', '${p.i18n}')`)
         ).join('');
         
         const selectedProd = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat);
         const segGrid = document.getElementById('seg-grid');
         if (state.cat && selectedProd) {
             segGrid.innerHTML = selectedProd.segments.map(s => 
-                createCardHTML(s, state.seg === s, `select('seg', '${s}')`)
+                createCardHTML(t(s), state.seg === s, `select('seg', '${s}')`)
             ).join('');
         } else { segGrid.innerHTML = `<div style="grid-column:1/-1; color:#999; text-align:center; padding:10px;">Please Select Plan</div>`; }
 
+        // Step 4 Grid
         const itemSec = document.getElementById('item-section');
         if (state.cat && state.seg && selectedProd) {
             itemSec.style.display = 'block';
-            document.getElementById('t-item').innerText = t('UI_SELECT_OPTION');
-            document.getElementById('item-grid').innerHTML = Object.keys(selectedProd.items).map(k => `
-                <div class="card ${state.item===k?'active':''}" onclick="select('item', '${k}')">
-                    <div class="card-emoji">⚡</div>
-                    <div class="card-text">${k}</div>
-                </div>`).join('');
+            document.getElementById('t-item').innerText = getLabel('UI_SELECT_OPTION');
+            document.getElementById('item-grid').innerHTML = Object.keys(selectedProd.items).map(k => 
+                createCardHTML(k, state.item === k, `select('item', '${k}')`)
+            ).join('');
         } else { itemSec.style.display = 'none'; }
 
+        // Price Logic
         const priceBox = document.getElementById('price-box');
         if (state.cat && state.seg && state.item && selectedProd) {
             priceBox.style.display = 'flex';
@@ -290,7 +302,7 @@
         };
         printPDF(order);
         await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
-        alert(t('UI_SUCCESS', 'Quotation Saved!')); cart = []; renderCart(); window.scrollTo(0,0);
+        alert("Success!"); cart = []; renderCart(); window.scrollTo(0,0);
     }
 
     function printPDF(o) {
