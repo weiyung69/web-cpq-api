@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPQ Admin</title>
+    <title>CPQ Admin - Azure Managed</title>
     <style>
         :root { --azure: #0078d4; --bg: #f3f2f1; --border: #e1dfdd; --danger: #d13438; --tag-bg: #e1f0fe; --tag-text: #004578; --whatsapp: #25D366; --gmail: #DB4437; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #323130; }
-        .container { max-width: 1150px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .header { border-bottom: 2px solid var(--azure); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #323130; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header { border-bottom: 2px solid var(--azure); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; }
         .settings-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; background: #faf9f8; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
         .settings-bar label { display: block; font-size: 11px; font-weight: bold; color: #666; margin-bottom: 5px; }
         .settings-bar input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
@@ -18,26 +18,25 @@
         .panel { display: none; }
         .panel.active { display: block; }
         .tag-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-        .tag { padding: 4px 10px; background: #f3f2f1; border-radius: 15px; font-size: 12px; cursor: pointer; border: 1px solid #ddd; transition: 0.2s; }
+        .tag { padding: 4px 10px; background: #f3f2f1; border-radius: 15px; font-size: 12px; cursor: pointer; border: 1px solid #ddd; }
         .tag.active { background: var(--tag-bg); color: var(--tag-text); border-color: var(--azure); font-weight: bold; }
-        .prod-card { border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .prod-card { border: 1px solid var(--border); border-radius: 4px; padding: 20px; margin-bottom: 20px; position: relative; }
         .prod-header { display: grid; grid-template-columns: 1.5fr 1fr 80px auto; gap: 15px; margin-bottom: 15px; align-items: start; }
         .price-row { display: grid; grid-template-columns: 2fr 1fr 40px; gap: 10px; margin-bottom: 8px; background: #faf9f8; padding: 8px; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid var(--border); padding: 12px; text-align: left; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th { background: #f3f2f1; padding: 12px; border: 1px solid var(--border); font-size: 12px; text-align: left; }
+        td { border: 1px solid var(--border); padding: 12px; vertical-align: top; }
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
         .btn-primary { background: var(--azure); color: white; }
         .btn-danger { color: var(--danger); background: none; border: 1px solid var(--danger); }
-        .filter-bar { background:#f3f2f1; padding:15px; margin-bottom:15px; border-radius:8px; display:flex; gap:15px; align-items:center; font-size:13px; }
-        .footer { position: sticky; bottom: 0; background: white; padding: 20px; border-top: 1px solid #ddd; text-align: right; margin-top: 20px; }
-        .contact-link { text-decoration: none; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-top: 5px; }
-        .contact-link:hover { text-decoration: underline; opacity: 0.8; }
+        .filter-bar { background:#f3f2f1; padding:15px; margin-bottom:15px; border-radius:4px; display:flex; gap:15px; align-items:center; font-size:13px; }
+        .footer { position: sticky; bottom: 0; background: white; padding: 20px; border-top: 1px solid #ddd; text-align: right; margin-top: 20px; z-index: 10; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header"><h2>CPQ Manager</h2></div>
+    <div class="header"><h2>CPQ Manager <small style="font-weight:normal; font-size:12px; color:#666;">(v5.6 Azure Architecture)</small></h2></div>
 
     <div class="settings-bar">
         <div><label>LANGUAGES (CSV)</label><input type="text" id="conf-langs"></div>
@@ -47,8 +46,8 @@
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('langs')">1. Library (All Keys)</button>
-        <button class="tab-btn" onclick="showTab('catalog')">2. Product Logic</button>
+        <button class="tab-btn active" onclick="showTab('langs')">1. Library (I18N)</button>
+        <button class="tab-btn" onclick="showTab('catalog')">2. Product Config</button>
         <button class="tab-btn" onclick="showTab('orders')">3. Sales Orders</button>
     </div>
 
@@ -57,32 +56,32 @@
             <thead id="lang-head"></thead>
             <tbody id="lang-body"></tbody>
         </table>
-        <button class="btn btn-primary" style="margin-top:15px;" onclick="addLibKey()">+ New Tag/UI Key</button>
+        <button class="btn btn-primary" style="margin-top:15px;" onclick="addLibKey()">+ Add Translation Key</button>
     </div>
 
     <div id="panel-catalog" class="panel">
         <div id="catalog-list"></div>
-        <button class="btn btn-primary" style="width:100%; padding:20px; border:2px dashed var(--azure); background:white; color:var(--azure);" onclick="addProd()">+ Add New Product Group</button>
+        <button class="btn btn-primary" style="width:100%; padding:20px; border:2px dashed var(--azure); background:white; color:var(--azure);" onclick="addProd()">+ Add New Product Category</button>
     </div>
 
     <div id="panel-orders" class="panel">
         <div class="filter-bar">
             <label>Year:</label><select id="sel-year" onchange="renderOrders()"></select>
             <label>Month:</label><select id="sel-month" onchange="renderOrders()"></select>
-            <div style="margin-left:auto; font-weight:bold;">Monthly Total: <span id="month-total">0</span></div>
+            <div style="margin-left:auto; font-weight:bold; color:var(--azure);">Monthly Revenue: <span id="month-total">0</span></div>
         </div>
         <div id="orders-list"></div>
     </div>
 
     <div class="footer">
-        <span id="save-status" style="margin-right:20px; font-weight:bold;"></span>
-        <button class="btn btn-primary" style="padding:12px 30px;" onclick="saveToAzure()">SYNC TO AZURE</button>
+        <span id="save-status" style="margin-right:20px; font-weight:bold; color:var(--success);"></span>
+        <button class="btn btn-primary" style="padding:12px 30px;" onclick="saveToAzure()">SYNC DATA TO AZURE</button>
     </div>
 </div>
 
 <script>
     const API_URL = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
-    let cpq = { settings: { langs: [], currency: "¥", tax_rate: 0 }, catalog: {} };
+    let cpq = { settings: { langs: [], currency: "$", tax_rate: 0 }, catalog: {} };
     let langs = {};
     let orders = [];
 
@@ -109,21 +108,23 @@
         if(id === 'orders') renderOrders();
     }
 
+    // --- Library Management ---
     function renderLangs() {
         const cols = cpq.settings.langs;
-        document.getElementById('lang-head').innerHTML = `<tr><th>Key ID</th>${cols.map(c => `<th>${c.toUpperCase()}</th>`).join('')}<th></th></tr>`;
+        document.getElementById('lang-head').innerHTML = `<tr><th>Key ID</th>${cols.map(c => `<th>${c.toUpperCase()}</th>`).join('')}<th>Action</th></tr>`;
         document.getElementById('lang-body').innerHTML = Object.keys(langs).map(k => `
             <tr>
-                <td><input type="text" value="${k}" onblur="renameTag('${k}', this.value)"></td>
-                ${cols.map(c => `<td><input type="text" value="${langs[k][c]||''}" onchange="langs['${k}']['${c}']=this.value"></td>`).join('')}
-                <td><button class="btn-danger" onclick="deleteTag('${k}')">×</button></td>
+                <td><input type="text" value="${k}" onblur="renameTag('${k}', this.value)" style="width:100%; border:none; font-weight:bold;"></td>
+                ${cols.map(c => `<td><input type="text" value="${langs[k][c]||''}" onchange="langs['${k}']['${c}']=this.value" style="width:100%; border:none;"></td>`).join('')}
+                <td style="text-align:center;"><button class="btn-danger" onclick="deleteTag('${k}')" style="border:none;">×</button></td>
             </tr>
         `).join('');
     }
+    function addLibKey() { const k = prompt("Key ID (e.g., SEG_MEMBER):"); if(k && !langs[k]) { langs[k]={}; renderLangs(); } }
+    function deleteTag(k) { if(confirm("Delete this translation?")) { delete langs[k]; renderLangs(); } }
+    function renameTag(oldK, newK) { if(newK && newK!==oldK) { langs[newK]=langs[oldK]; delete langs[oldK]; renderLangs(); } }
 
-    function addLibKey() { const k = prompt("Key ID:"); if(k && !langs[k]) { langs[k]={}; renderLangs(); } }
-    function deleteTag(k) { if(confirm("Delete?")) { delete langs[k]; renderLangs(); } }
-
+    // --- Catalog Management ---
     function renderCatalog() {
         const container = document.getElementById('catalog-list');
         container.innerHTML = "";
@@ -133,8 +134,8 @@
             card.innerHTML = `
                 <div class="prod-header">
                     <div><label>PRODUCT ID</label><input type="text" value="${id}" onblur="renameProd('${id}', this.value)"></div>
-                    <div><label>LABEL (CAT ONLY)</label>
-                        <select onchange="cpq.catalog['${id}'].i18n=this.value">
+                    <div><label>I18N LABEL (CAT_)</label>
+                        <select onchange="cpq.catalog['${id}'].i18n=this.value" style="width:100%; padding:8px;">
                             ${Object.keys(langs).filter(k => k.startsWith('CAT_')).map(lk => `<option value="${lk}" ${lk==p.i18n?'selected':''}>${lk}</option>`).join('')}
                         </select>
                     </div>
@@ -142,7 +143,7 @@
                     <button class="btn-danger" onclick="deleteProd('${id}')">DELETE</button>
                 </div>
                 <div style="margin-bottom:15px;">
-                    <label style="font-size:11px; font-weight:bold; color:#666">ASSIGN DIMENSIONS</label>
+                    <label style="font-size:11px; font-weight:bold; color:#666">ASSIGN DIMENSIONS (FILTERS)</label>
                     <div class="tag-container">
                         ${Object.keys(langs).filter(k => k.startsWith('SEG_') || k.startsWith('CAT_')).map(tag => `
                             <span class="tag ${p.segments.includes(tag)?'active':''}" onclick="toggleTag('${id}', '${tag}')">${tag}</span>
@@ -151,23 +152,29 @@
                 </div>
                 <div id="items-${id}">${Object.entries(p.items).map(([n,v]) => `
                     <div class="price-row">
-                        <input type="text" value="${n}" onblur="renameSlot('${id}','${n}',this.value)">
+                        <input type="text" value="${n}" onblur="renameSlot('${id}','${n}',this.value)" placeholder="e.g. Adult 1 Session">
                         <input type="number" value="${v}" onchange="cpq.catalog['${id}'].items['${n}']=parseInt(this.value)">
                         <button class="btn-danger" onclick="deleteSlot('${id}','${n}')">×</button>
                     </div>`).join('')}
                 </div>
-                <button class="btn btn-primary" style="font-size:11px;" onclick="addPriceSlot('${id}')">+ Add Price Slot</button>
+                <button class="btn btn-primary" style="font-size:11px;" onclick="addPriceSlot('${id}')">+ Add New Price Item</button>
             `;
             container.appendChild(card);
         });
     }
-
+    function addProd() { const id = "p_"+Date.now().toString().slice(-4); cpq.catalog[id]={i18n:"",sort:9,segments:[],items:{"Standard Item":0}}; renderCatalog(); }
+    function deleteProd(id) { if(confirm("Delete Product Group?")) { delete cpq.catalog[id]; renderCatalog(); } }
+    function renameProd(old, next) { if(next && next!==old) { cpq.catalog[next]=cpq.catalog[old]; delete cpq.catalog[old]; renderCatalog(); } }
+    function addPriceSlot(id) { const n=prompt("Item Name (e.g. Member - Adult):"); if(n) { cpq.catalog[id].items[n]=0; renderCatalog(); } }
+    function deleteSlot(id, s) { delete cpq.catalog[id].items[s]; renderCatalog(); }
+    function renameSlot(id, old, next) { if(next && next!==old) { cpq.catalog[id].items[next]=cpq.catalog[id].items[old]; delete cpq.catalog[id].items[old]; renderCatalog(); } }
     function toggleTag(pid, tag) {
         let ts = cpq.catalog[pid].segments || [];
         cpq.catalog[pid].segments = ts.includes(tag) ? ts.filter(t => t !== tag) : [...ts, tag];
         renderCatalog();
     }
 
+    // --- Order Management (Upgraded for QTY & LineTotal) ---
     function initOrderFilters() {
         const now = new Date();
         const sy = document.getElementById('sel-year'); const sm = document.getElementById('sel-month');
@@ -177,91 +184,89 @@
     }
 
     function renderOrders() {
-    const y = document.getElementById('sel-year').value;
-    const m = document.getElementById('sel-month').value.padStart(2, '0');
-    const container = document.getElementById('orders-list');
-    let sum = 0;
-    
-    const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`));
+        const y = document.getElementById('sel-year').value;
+        const m = document.getElementById('sel-month').value.padStart(2, '0');
+        const container = document.getElementById('orders-list');
+        let monthlySum = 0;
+        
+        const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`));
 
-    if(filtered.length === 0) {
-        container.innerHTML = "<p style='text-align:center;padding:40px;color:#999;'>No orders found.</p>";
-        document.getElementById('month-total').innerText = cpq.settings.currency + " 0";
-        return;
+        if(filtered.length === 0) {
+            container.innerHTML = "<div style='text-align:center;padding:60px;color:#999;'>No orders found for this period.</div>";
+            document.getElementById('month-total').innerText = cpq.settings.currency + " 0";
+            return;
+        }
+
+        container.innerHTML = `<table>
+            <thead>
+                <tr>
+                    <th style="width:100px;">Date</th>
+                    <th style="width:250px;">Customer Contact</th>
+                    <th>Quotation Items & Qty</th>
+                    <th style="width:160px;">Total Amount</th>
+                    <th style="width:160px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filtered.map((o, idx) => {
+                    // 计算该订单总额用于月统计
+                    const priceNum = parseFloat(o.price.replace(/[^0-9.]/g,'')) || 0;
+                    monthlySum += priceNum;
+                    
+                    const isFollowed = o.status === 'followed';
+                    const cur = cpq.settings.currency;
+
+                    // 渲染项目列表 (支持新架构：unit_price, qty, line_total)
+                    let itemsHtml = "";
+                    if (o.items && Array.isArray(o.items)) {
+                        itemsHtml = o.items.map(it => {
+                            const unit = it.unit_price || it.price; // 兼容旧数据
+                            const qty = it.qty || 1;
+                            const lineTotal = it.line_total || (unit * qty);
+                            return `
+                                <div style="font-size:12px; border-bottom:1px solid #f5f5f5; padding:6px 0; display:flex; justify-content:space-between;">
+                                    <div>
+                                        <strong>${it.desc}</strong> <br>
+                                        <span style="color:#666; font-size:11px;">${it.seg} | ${cur}${unit.toLocaleString()} x ${qty}</span>
+                                    </div>
+                                    <div style="font-weight:bold;">${cur}${lineTotal.toLocaleString()}</div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+
+                    // Contact Links
+                    const cleanPhone = o.phone ? o.phone.replace(/\D/g, '') : '';
+                    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent('Hi '+o.name+', following up on your quotation for '+o.price)}`;
+                    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${o.email}&su=Quotation Follow-up&body=Hi ${o.name}, any updates?`;
+
+                    return `<tr>
+                        <td style="font-size:12px; color:#666;">${o.date.split('T')[0]}<br><small>${o.date.split('T')[1].slice(0,5)}</small></td>
+                        <td>
+                            <strong style="color:var(--azure);">${o.name}</strong><br>
+                            <div style="margin-top:5px;">
+                                <a href="${waUrl}" target="_blank" style="color:var(--whatsapp); text-decoration:none; font-size:11px; display:block; margin-bottom:3px;">💬 ${o.phone || 'No Phone'}</a>
+                                <a href="${gmailUrl}" target="_blank" style="color:var(--azure); text-decoration:none; font-size:11px; display:block;">📧 ${o.email || 'No Email'}</a>
+                            </div>
+                        </td>
+                        <td>${itemsHtml}</td>
+                        <td style="text-align:right;">
+                            <div style="font-size:11px; color:#888;">Sub: ${o.subtotal}</div>
+                            <div style="font-size:11px; color:#d13438;">Tax: ${o.tax}</div>
+                            <div style="font-size:18px; font-weight:bold; margin-top:5px;">${o.price}</div>
+                        </td>
+                        <td>
+                            <button class="btn" style="width:100%; background:${isFollowed?'#28a745':'#dc3545'}; color:white; font-size:11px;" 
+                                    onclick="toggleOrderStatus(${orders.indexOf(o)})">
+                                ${isFollowed ? 'FOLLOWED UP' : 'PENDING'}
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>`;
+        document.getElementById('month-total').innerText = cpq.settings.currency + " " + monthlySum.toLocaleString();
     }
-
-    container.innerHTML = `<table>
-        <thead>
-            <tr>
-                <th style="width:100px;">Date</th>
-                <th style="width:220px;">Customer / Contact</th>
-                <th>Quotation Items</th>
-                <th style="width:140px;">Pricing Details</th>
-                <th style="width:160px;">Status Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${filtered.map((o) => {
-                const priceNum = parseFloat(o.price.replace(/[^0-9.]/g,'')) || 0;
-                sum += priceNum;
-                const isFollowed = o.status === 'followed';
-                const btnStyle = isFollowed ? 'background:#28a745;' : 'background:#dc3545;';
-                const btnText = isFollowed ? 'Followed Up' : 'Pending Follow-up';
-
-                let itemsHtml = "";
-                let summaryDesc = "";
-                
-                if (o.items && Array.isArray(o.items)) {
-                    itemsHtml = o.items.map(it => `
-                        <div style="font-size:12px; border-bottom:1px solid #f0f0f0; padding:4px 0;">
-                            <strong>${it.desc}</strong> <br>
-                            <span style="color:#666; font-size:11px;">${it.seg} - ${cpq.settings.currency}${it.price.toLocaleString()}</span>
-                        </div>
-                    `).join('');
-                    summaryDesc = `${o.items.length} items`;
-                } else {
-                    itemsHtml = `<div><strong>${o.cat || '-'}</strong><br><small>${o.seg || '-'}</small></div>`;
-                    summaryDesc = o.cat || 'Order';
-                }
-
-                const cleanPhone = o.phone ? o.phone.replace(/\D/g, '') : '';
-                const cName = o.name || 'Customer';
-                const brand = cpq.settings.brand_name || 'Our Team';
-                const waText = encodeURIComponent(`Hi ${cName}, I'm following up on your inquiry for ${summaryDesc} (${o.price}). Let me know if you have any questions!`);
-                const waUrl = `https://wa.me/${cleanPhone}?text=${waText}`;
-                const mailSub = encodeURIComponent(`Quotation Follow-up: ${summaryDesc}`);
-                const mailBody = encodeURIComponent(`Hi ${cName},\n\nI'm following up on your recent inquiry for ${summaryDesc} with a total of ${o.price}.\n\nPlease let us know if you have any questions or would like to proceed.\n\nBest regards,\n${brand}`);
-                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${o.email}&su=${mailSub}&body=${mailBody}`;
-
-                return `<tr>
-                    <td style="font-size:13px;">${o.date.split('T')[0]}</td>
-                    <td>
-                        <strong style="font-size:14px; color:#333;">${o.name}</strong><br>
-                        <div style="margin-top:5px;">
-                            ${o.phone ? `<a href="${waUrl}" target="_blank" class="contact-link" style="color:var(--whatsapp); display:flex; align-items:center; gap:5px; text-decoration:none; font-size:12px;"><span>💬</span> ${o.phone}</a>` : '<small style="color:#ccc;">🚫 No Phone</small>'}
-                            ${o.email ? `<a href="${gmailUrl}" target="_blank" class="contact-link" style="color:var(--azure); display:flex; align-items:center; gap:5px; text-decoration:none; font-size:12px; margin-top:4px;"><span>📧</span> ${o.email}</a>` : '<small style="color:#ccc;">🚫 No Email</small>'}
-                        </div>
-                    </td>
-                    <td>${itemsHtml}</td>
-                    <td>
-                        <div style="color:#666; font-size:11px;">Sub: ${o.subtotal || '-'}</div>
-                        <div style="color:#d13438; font-size:11px;">Tax: ${o.tax || '-'}</div>
-                        <div style="font-weight:bold; color:#000; font-size:15px; border-top:1px solid #eee; margin-top:3px; padding-top:3px;">
-                            ${o.price}
-                        </div>
-                    </td>
-                    <td>
-                        <button class="btn" style="${btnStyle} color:white; font-size:11px; width:100%; border:none; padding:10px; border-radius:4px; cursor:pointer; font-weight:bold;" 
-                                onclick="toggleOrderStatus(${orders.indexOf(o)})">
-                            ${btnText}
-                        </button>
-                    </td>
-                </tr>`;
-            }).join('')}
-        </tbody>
-    </table>`;
-    document.getElementById('month-total').innerText = cpq.settings.currency + " " + sum.toLocaleString();
-}
 
     async function toggleOrderStatus(idx) {
         orders[idx].status = (orders[idx].status === 'followed') ? 'pending' : 'followed';
@@ -269,27 +274,25 @@
         await fetch(`${API_URL}?type=orders`, { method: "POST", body: JSON.stringify(orders) });
     }
 
-    function addProd() { const id = "p_"+Date.now().toString().slice(-4); cpq.catalog[id]={i18n:"",sort:9,segments:[],items:{"Standard":0}}; renderCatalog(); }
-    function deleteProd(id) { if(confirm("Delete?")) { delete cpq.catalog[id]; renderCatalog(); } }
-    function renameProd(old, next) { if(next && next!==old) { cpq.catalog[next]=cpq.catalog[old]; delete cpq.catalog[old]; renderCatalog(); } }
-    function addPriceSlot(id) { const n=prompt("Name:"); if(n) { cpq.catalog[id].items[n]=0; renderCatalog(); } }
-    function deleteSlot(id, s) { delete cpq.catalog[id].items[s]; renderCatalog(); }
-    function renameSlot(id, old, next) { if(next && next!==old) { cpq.catalog[id].items[next]=cpq.catalog[id].items[old]; delete cpq.catalog[id].items[old]; renderCatalog(); } }
-
     async function saveToAzure() {
         const btn = event.currentTarget; btn.disabled = true; btn.innerText = "Syncing...";
         cpq.settings.langs = document.getElementById('conf-langs').value.split(',').map(s=>s.trim());
         cpq.settings.currency = document.getElementById('conf-currency').value;
         cpq.settings.tax_rate = parseFloat(document.getElementById('conf-tax').value);
         cpq.settings.brand_name = document.getElementById('conf-brand').value;
-        await Promise.all([
-            fetch(`${API_URL}?type=cpq`, { method: "POST", body: JSON.stringify(cpq) }),
-            fetch(`${API_URL}?type=langs`, { method: "POST", body: JSON.stringify(langs) })
-        ]);
-        btn.disabled = false; btn.innerText = "SYNC TO AZURE";
-        document.getElementById('save-status').innerText = "SAVED!";
-        setTimeout(()=>document.getElementById('save-status').innerText="", 2000);
+        
+        try {
+            await Promise.all([
+                fetch(`${API_URL}?type=cpq`, { method: "POST", body: JSON.stringify(cpq) }),
+                fetch(`${API_URL}?type=langs`, { method: "POST", body: JSON.stringify(langs) })
+            ]);
+            document.getElementById('save-status').innerText = "SUCCESSFULLY SYNCED!";
+        } catch(e) { alert("Sync failed!"); }
+        
+        btn.disabled = false; btn.innerText = "SYNC DATA TO AZURE";
+        setTimeout(()=>document.getElementById('save-status').innerText="", 3000);
     }
+
     load();
 </script>
 </body>
