@@ -26,9 +26,14 @@
         table { width: 100%; border-collapse: collapse; background: white; }
         th { background: #f3f2f1; padding: 12px; border: 1px solid var(--border); font-size: 12px; text-align: left; }
         td { border: 1px solid var(--border); padding: 12px; vertical-align: top; }
-        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+
+        /* ✨ 联系按钮专属样式 */
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-size: 12px; }
         .btn-primary { background: var(--azure); color: white; }
         .btn-danger { color: var(--danger); background: none; border: 1px solid var(--danger); }
+        .btn-wa { background: var(--whatsapp); color: white; width: 100%; margin-bottom: 5px; }
+        .btn-mail { background: #555; color: white; width: 100%; }
+        
         .filter-bar { background:#f3f2f1; padding:15px; margin-bottom:15px; border-radius:4px; display:flex; gap:15px; align-items:center; font-size:13px; }
         .footer { position: sticky; bottom: 0; background: white; padding: 20px; border-top: 1px solid #ddd; text-align: right; margin-top: 20px; z-index: 10; }
         .note-area { background: #fff4ce; padding: 10px; border-radius: 4px; border-left: 4px solid #ffb900; margin-bottom: 15px; }
@@ -190,7 +195,7 @@
         if(!cpq.catalog[pid].segments) cpq.catalog[pid].segments = [];
         let ts = cpq.catalog[pid].segments;
         cpq.catalog[pid].segments = ts.includes(tag) ? ts.filter(t => t !== tag) : [...ts, tag];
-        renderCatalog(); // 重新渲染刷新勾选状态
+        renderCatalog(); 
     }
 
     function addProd() { const id = "p_"+Date.now().toString().slice(-4); cpq.catalog[id]={i18n:"",sort:9,segments:[],items:{"Standard Item":0}}; renderCatalog(); }
@@ -208,25 +213,49 @@
         for(let i=1; i<=12; i++) sm.innerHTML += `<option value="${i}" ${i===(now.getMonth()+1)?'selected':''}>${i<10?'0'+i:i}</option>`;
     }
 
+    // ✨ 这里的渲染逻辑已经针对 Tab 3 进行了精准补全，增加了 WhatsApp 和 Email 按钮
     function renderOrders() {
         const y = document.getElementById('sel-year').value;
         const m = document.getElementById('sel-month').value.padStart(2, '0');
         const container = document.getElementById('orders-list');
         let monthlySum = 0;
-        const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`));
+        const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`)).reverse(); // 倒序显示最新
+
         if(filtered.length === 0) {
             container.innerHTML = "<div style='text-align:center;padding:60px;color:#999;'>No orders found.</div>";
             document.getElementById('month-total').innerText = cpq.settings.currency + " 0";
             return;
         }
-        container.innerHTML = `<table><thead><tr><th>Date</th><th>Customer Contact</th><th>Quotation Items & Qty</th><th style="width:160px;">Total Amount</th><th style="width:160px;">Action</th></tr></thead>
+
+        container.innerHTML = `<table><thead><tr><th>Date</th><th>Customer Contact</th><th>Items & Qty</th><th style="width:140px;">Total Amount</th><th style="width:160px;">Action</th></tr></thead>
             <tbody>${filtered.map((o) => {
                 const priceNum = parseFloat(o.price.replace(/[^0-9.]/g,'')) || 0;
                 monthlySum += priceNum;
                 const isFollowed = o.status === 'followed';
                 const cur = cpq.settings.currency;
+                
+                // WhatsApp 话术
+                const msg = encodeURIComponent(`Hi ${o.name}, I'm from ${cpq.settings.brand_name}. I received your quote request for ${o.items[0].desc}. Can I help you?`);
+                
                 let itemsHtml = (o.items || []).map(it => `<div style="font-size:12px; border-bottom:1px solid #f5f5f5; padding:6px 0; display:flex; justify-content:space-between;"><div><strong>${it.desc}</strong><br><small>${cur}${(it.unit_price||it.price).toLocaleString()} x ${it.qty||1}</small></div><div style="font-weight:bold;">${cur}${(it.line_total||(it.price*(it.qty||1))).toLocaleString()}</div></div>`).join('');
-                return `<tr><td>${o.date.split('T')[0]}</td><td><strong>${o.name}</strong><br><small>${o.phone}</small></td><td>${itemsHtml}</td><td style="text-align:right;">${o.price}</td><td><button class="btn" style="width:100%; background:${isFollowed?'#28a745':'#dc3545'}; color:white; font-size:11px;" onclick="toggleOrderStatus(${orders.indexOf(o)})">${isFollowed?'FOLLOWED':'PENDING'}</button></td></tr>`;
+                
+                return `<tr>
+                    <td>${o.date.split('T')[0]}</td>
+                    <td>
+                        <strong>${o.name}</strong><br>
+                        <div style="margin-top:8px;">
+                            <a href="https://wa.me/${o.phone}?text=${msg}" target="_blank" class="btn btn-wa">💬 WhatsApp</a>
+                            <a href="mailto:${o.email}" class="btn btn-mail" style="margin-top:5px;">📧 Email</a>
+                        </div>
+                    </td>
+                    <td>${itemsHtml}</td>
+                    <td style="text-align:right;"><b>${o.price}</b></td>
+                    <td>
+                        <button class="btn" style="width:100%; background:${isFollowed?'#28a745':'#dc3545'}; color:white; font-size:11px;" onclick="toggleOrderStatus(${orders.indexOf(o)})">
+                            ${isFollowed?'✅ FOLLOWED':'⏳ PENDING'}
+                        </button>
+                    </td>
+                </tr>`;
             }).join('')}</tbody></table>`;
         document.getElementById('month-total').innerText = cpq.settings.currency + " " + monthlySum.toLocaleString();
     }
