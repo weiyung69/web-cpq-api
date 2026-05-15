@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPQ Admin v4.3 - CRM Enhanced</title>
+    <title>CPQ Admin v4.5 - Professional CRM</title>
     <style>
-        :root { --azure: #0078d4; --bg: #f3f2f1; --border: #e1dfdd; --danger: #d13438; --tag-bg: #e1f0fe; --tag-text: #004578; --whatsapp: #25D366; --gmail: #EA4335; }
+        :root { --azure: #0078d4; --bg: #f3f2f1; --border: #e1dfdd; --danger: #d13438; --tag-bg: #e1f0fe; --tag-text: #004578; --whatsapp: #25D366; --gmail: #0078d4; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #323130; }
         .container { max-width: 1100px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .header { border-bottom: 2px solid var(--azure); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -24,19 +24,20 @@
         .prod-header { display: grid; grid-template-columns: 1.5fr 1fr 80px auto; gap: 15px; margin-bottom: 15px; align-items: start; }
         .price-row { display: grid; grid-template-columns: 2fr 1fr 40px; gap: 10px; margin-bottom: 8px; background: #faf9f8; padding: 8px; border-radius: 4px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
+        th, td { border: 1px solid var(--border); padding: 12px; text-align: left; }
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
         .btn-primary { background: var(--azure); color: white; }
         .btn-danger { color: var(--danger); background: none; border: 1px solid var(--danger); }
         .filter-bar { background:#f3f2f1; padding:15px; margin-bottom:15px; border-radius:8px; display:flex; gap:15px; align-items:center; font-size:13px; }
         .footer { position: sticky; bottom: 0; background: white; padding: 20px; border-top: 1px solid #ddd; text-align: right; margin-top: 20px; }
-        .contact-link { text-decoration: none; font-size: 11px; font-weight: bold; display: block; margin-top: 2px; }
+        .contact-link { text-decoration: none; font-size: 11px; font-weight: bold; display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+        .contact-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header"><h2>CPQ Manager v4.3</h2></div>
+    <div class="header"><h2>CPQ Manager v4.5</h2></div>
 
     <div class="settings-bar">
         <div><label>LANGUAGES (CSV)</label><input type="text" id="conf-langs"></div>
@@ -47,7 +48,7 @@
 
     <div class="tabs">
         <button class="tab-btn active" onclick="showTab('langs')">1. Library (All Keys)</button>
-        <button class="tab-btn" onclick="showTab('catalog')">2. Product Logic (SEG/CAT Only)</button>
+        <button class="tab-btn" onclick="showTab('catalog')">2. Product Logic</button>
         <button class="tab-btn" onclick="showTab('orders')">3. Sales Orders</button>
     </div>
 
@@ -66,10 +67,8 @@
 
     <div id="panel-orders" class="panel">
         <div class="filter-bar">
-            <label>Year:</label>
-            <select id="sel-year" onchange="renderOrders()"></select>
-            <label>Month:</label>
-            <select id="sel-month" onchange="renderOrders()"></select>
+            <label>Year:</label><select id="sel-year" onchange="renderOrders()"></select>
+            <label>Month:</label><select id="sel-month" onchange="renderOrders()"></select>
             <div style="margin-left:auto; font-weight:bold;">Monthly Total: <span id="month-total">0</span></div>
         </div>
         <div id="orders-list"></div>
@@ -127,7 +126,7 @@
         `).join('');
     }
 
-    function addLibKey() { const k = prompt("Key ID (SEG_ / CAT_ / UI_):"); if(k && !langs[k]) { langs[k]={}; renderLangs(); } }
+    function addLibKey() { const k = prompt("Key ID:"); if(k && !langs[k]) { langs[k]={}; renderLangs(); } }
     function deleteTag(k) { if(confirm("Delete?")) { delete langs[k]; renderLangs(); } }
 
     function renderCatalog() {
@@ -149,7 +148,7 @@
                     <button class="btn-danger" onclick="deleteProd('${id}')">DELETE</button>
                 </div>
                 <div style="margin-bottom:15px;">
-                    <label style="font-size:11px; font-weight:bold; color:#666">ASSIGN DIMENSIONS (SEG/CAT ONLY)</label>
+                    <label style="font-size:11px; font-weight:bold; color:#666">ASSIGN DIMENSIONS</label>
                     <div class="tag-container">
                         ${Object.keys(langs).filter(k => k.startsWith('SEG_') || k.startsWith('CAT_')).map(tag => `
                             <span class="tag ${p.segments.includes(tag)?'active':''}" onclick="toggleTag('${id}', '${tag}')">${tag}</span>
@@ -206,30 +205,43 @@
                     <th>Identity</th>
                     <th>Product Description</th>
                     <th>Price</th>
-                    <th>Action</th>
+                    <th>Status Action</th>
                 </tr>
             </thead>
             <tbody>
                 ${filtered.map((o) => {
                     sum += parseFloat(o.price.replace(/[^0-9.]/g,'')) || 0;
-                    const isFollowed = o.status === 'followed';
-                    const btnStyle = isFollowed ? 'background:#28a745;color:white;' : 'background:#dc3545;color:white;';
-                    const btnText = isFollowed ? 'Followed Up' : 'Pending Follow-up';
                     
+                    const isFollowed = o.status === 'followed';
+                    const btnStyle = isFollowed ? 'background:#28a745;' : 'background:#dc3545;';
+                    const btnText = isFollowed ? 'Followed Up' : 'Pending Follow-up';
+
+                    // --- 自动化跟进逻辑 ---
                     const cleanPhone = o.phone ? o.phone.replace(/\D/g, '') : '';
+                    const cName = o.name || 'Customer';
+                    const brand = cpq.settings.brand_name || 'Our Team';
+
+                    // WhatsApp 文案
+                    const waText = encodeURIComponent(`Hi ${cName}, I'm following up on your inquiry for ${o.cat} (${o.price}). Let me know if you have any questions!`);
+                    const waUrl = `https://wa.me/${cleanPhone}?text=${waText}`;
+
+                    // Email 文案
+                    const mailSub = encodeURIComponent(`Inquiry Follow-up: ${o.cat}`);
+                    const mailBody = encodeURIComponent(`Hi ${cName},\n\nI'm following up on your recent inquiry for ${o.cat} (${o.price}).\n\nPlease let us know if you have any questions or would like to proceed.\n\nBest regards,\n${brand}`);
+                    const mailUrl = `mailto:${o.email}?subject=${mailSub}&body=${mailBody}`;
 
                     return `<tr>
                         <td>${o.date.split('T')[0]}</td>
                         <td>
-                            <strong>${o.name}</strong><br>
-                            ${o.phone ? `<a href="https://wa.me/${cleanPhone}" target="_blank" class="contact-link" style="color:var(--whatsapp)">🟢 WhatsApp: ${o.phone}</a>` : '<small>No Phone</small>'}
-                            ${o.email ? `<a href="mailto:${o.email}" class="contact-link" style="color:var(--gmail)">🔴 Email: ${o.email}</a>` : '<small>No Email</small>'}
+                            <strong style="font-size:14px; color:#333;">${o.name}</strong><br>
+                            ${o.phone ? `<a href="${waUrl}" target="_blank" class="contact-link" style="color:var(--whatsapp)"><span>💬</span> WhatsApp Follow-up</a>` : '<small style="color:#ccc;">🚫 No Phone</small>'}
+                            ${o.email ? `<a href="${mailUrl}" class="contact-link" style="color:var(--azure)"><span>📧</span> Send Email Quote</a>` : '<small style="color:#ccc;">🚫 No Email</small>'}
                         </td>
-                        <td>${o.seg}</td>
-                        <td>${o.cat}</td>
+                        <td><span style="font-size:13px;">${o.seg}</span></td>
+                        <td><span style="font-size:13px;">${o.cat}</span></td>
                         <td style="font-weight:bold;">${o.price}</td>
                         <td>
-                            <button class="btn" style="${btnStyle} font-size:11px; width:140px; border:none; padding:8px; border-radius:4px; cursor:pointer;" 
+                            <button class="btn" style="${btnStyle} color:white; font-size:11px; width:150px; border:none; padding:8px; border-radius:4px; cursor:pointer;" 
                                     onclick="toggleOrderStatus(${orders.indexOf(o)})">
                                 ${btnText}
                             </button>
