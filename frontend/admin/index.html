@@ -31,6 +31,11 @@
         .btn-danger { color: var(--danger); background: none; border: 1px solid var(--danger); }
         .filter-bar { background:#f3f2f1; padding:15px; margin-bottom:15px; border-radius:4px; display:flex; gap:15px; align-items:center; font-size:13px; }
         .footer { position: sticky; bottom: 0; background: white; padding: 20px; border-top: 1px solid #ddd; text-align: right; margin-top: 20px; z-index: 10; }
+        
+        /* ✨ 新增 Note 样式 */
+        .note-area { background: #fff4ce; padding: 10px; border-radius: 4px; border-left: 4px solid #ffb900; margin-bottom: 15px; }
+        .note-area label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #857500; }
+        .note-area textarea { width: 100%; border: 1px solid #d2c6a3; background: transparent; padding: 5px; font-family: inherit; font-size: 13px; resize: vertical; }
     </style>
 </head>
 <body>
@@ -52,6 +57,10 @@
     </div>
 
     <div id="panel-langs" class="panel active">
+        <div class="note-area">
+            <label>📝 LIBRARY OPERATION NOTE</label>
+            <textarea id="note-langs" placeholder="Enter notes for Operation here..."></textarea>
+        </div>
         <table id="lang-table">
             <thead id="lang-head"></thead>
             <tbody id="lang-body"></tbody>
@@ -60,11 +69,19 @@
     </div>
 
     <div id="panel-catalog" class="panel">
+        <div class="note-area">
+            <label>📝 PRODUCT CONFIG OPERATION NOTE</label>
+            <textarea id="note-catalog" placeholder="Enter notes for Operation here..."></textarea>
+        </div>
         <div id="catalog-list"></div>
         <button class="btn btn-primary" style="width:100%; padding:20px; border:2px dashed var(--azure); background:white; color:var(--azure);" onclick="addProd()">+ Add New Product Category</button>
     </div>
 
     <div id="panel-orders" class="panel">
+        <div class="note-area">
+            <label>📝 SALES VIEW OPERATION NOTE</label>
+            <textarea id="note-orders" placeholder="Enter notes for Operation here..."></textarea>
+        </div>
         <div class="filter-bar">
             <label>Year:</label><select id="sel-year" onchange="renderOrders()"></select>
             <label>Month:</label><select id="sel-month" onchange="renderOrders()"></select>
@@ -81,31 +98,37 @@
 
 <script>
     const API_URL = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
-    let cpq = { settings: { langs: [], currency: "$", tax_rate: 0 }, catalog: {} };
+    let cpq = { settings: { langs: [], currency: "$", tax_rate: 0, notes: {} }, catalog: {} };
     let langs = {};
     let orders = [];
 
     async function load() {
-    const t = Date.now();
-    const [r1, r2, r3] = await Promise.all([
-        fetch(`${API_URL}?type=cpq&t=${t}`),
-        fetch(`${API_URL}?type=langs&t=${t}`),
-        fetch(`${API_URL}?type=orders&t=${t}`)
-    ]);
-    cpq = await r1.json(); 
-    langs = await r2.json(); 
-    const rawOrders = await r3.json();
-    
-    // ✨ 核心修复：确保 orders 永远是数组，防止 filter 报错
-    orders = Array.isArray(rawOrders) ? rawOrders : []; 
+        const t = Date.now();
+        const [r1, r2, r3] = await Promise.all([
+            fetch(`${API_URL}?type=cpq&t=${t}`),
+            fetch(`${API_URL}?type=langs&t=${t}`),
+            fetch(`${API_URL}?type=orders&t=${t}`)
+        ]);
+        cpq = await r1.json(); 
+        langs = await r2.json(); 
+        const rawOrders = await r3.json();
+        
+        orders = Array.isArray(rawOrders) ? rawOrders : []; 
 
-    document.getElementById('conf-langs').value = cpq.settings.langs.join(',');
-    document.getElementById('conf-currency').value = cpq.settings.currency;
-    document.getElementById('conf-tax').value = cpq.settings.tax_rate;
-    document.getElementById('conf-brand').value = cpq.settings.brand_name;
-    initOrderFilters(); 
-    renderLangs();
-}
+        document.getElementById('conf-langs').value = cpq.settings.langs.join(',');
+        document.getElementById('conf-currency').value = cpq.settings.currency;
+        document.getElementById('conf-tax').value = cpq.settings.tax_rate;
+        document.getElementById('conf-brand').value = cpq.settings.brand_name;
+        
+        // ✨ 加载 Note 数据
+        if(!cpq.settings.notes) cpq.settings.notes = {};
+        document.getElementById('note-langs').value = cpq.settings.notes.langs || "";
+        document.getElementById('note-catalog').value = cpq.settings.notes.catalog || "";
+        document.getElementById('note-orders').value = cpq.settings.notes.orders || "";
+
+        initOrderFilters(); 
+        renderLangs();
+    }
 
     function showTab(id) {
         document.querySelectorAll('.panel, .tab-btn').forEach(el => el.classList.remove('active'));
@@ -115,7 +138,6 @@
         if(id === 'orders') renderOrders();
     }
 
-    // --- Library Management ---
     function renderLangs() {
         const cols = cpq.settings.langs;
         document.getElementById('lang-head').innerHTML = `<tr><th>Key ID</th>${cols.map(c => `<th>${c.toUpperCase()}</th>`).join('')}<th>Action</th></tr>`;
@@ -131,7 +153,6 @@
     function deleteTag(k) { if(confirm("Delete this translation?")) { delete langs[k]; renderLangs(); } }
     function renameTag(oldK, newK) { if(newK && newK!==oldK) { langs[newK]=langs[oldK]; delete langs[oldK]; renderLangs(); } }
 
-    // --- Catalog Management ---
     function renderCatalog() {
         const container = document.getElementById('catalog-list');
         container.innerHTML = "";
@@ -149,14 +170,6 @@
                     <div><label>SORT</label><input type="number" value="${p.sort||0}" onchange="cpq.catalog['${id}'].sort=parseInt(this.value)"></div>
                     <button class="btn-danger" onclick="deleteProd('${id}')">DELETE</button>
                 </div>
-                <div style="margin-bottom:15px;">
-                    <label style="font-size:11px; font-weight:bold; color:#666">ASSIGN DIMENSIONS (FILTERS)</label>
-                    <div class="tag-container">
-                        ${Object.keys(langs).filter(k => k.startsWith('SEG_') || k.startsWith('CAT_')).map(tag => `
-                            <span class="tag ${p.segments.includes(tag)?'active':''}" onclick="toggleTag('${id}', '${tag}')">${tag}</span>
-                        `).join('')}
-                    </div>
-                </div>
                 <div id="items-${id}">${Object.entries(p.items).map(([n,v]) => `
                     <div class="price-row">
                         <input type="text" value="${n}" onblur="renameSlot('${id}','${n}',this.value)" placeholder="e.g. Adult 1 Session">
@@ -169,19 +182,14 @@
             container.appendChild(card);
         });
     }
+
     function addProd() { const id = "p_"+Date.now().toString().slice(-4); cpq.catalog[id]={i18n:"",sort:9,segments:[],items:{"Standard Item":0}}; renderCatalog(); }
     function deleteProd(id) { if(confirm("Delete Product Group?")) { delete cpq.catalog[id]; renderCatalog(); } }
     function renameProd(old, next) { if(next && next!==old) { cpq.catalog[next]=cpq.catalog[old]; delete cpq.catalog[old]; renderCatalog(); } }
     function addPriceSlot(id) { const n=prompt("Item Name (e.g. Member - Adult):"); if(n) { cpq.catalog[id].items[n]=0; renderCatalog(); } }
     function deleteSlot(id, s) { delete cpq.catalog[id].items[s]; renderCatalog(); }
-    function renameSlot(id, old, next) { if(next && next!==old) { cpq.catalog[id].items[next]=cpq.catalog[id].items[old]; delete cpq.catalog[id].items[old]; renderCatalog(); } }
-    function toggleTag(pid, tag) {
-        let ts = cpq.catalog[pid].segments || [];
-        cpq.catalog[pid].segments = ts.includes(tag) ? ts.filter(t => t !== tag) : [...ts, tag];
-        renderCatalog();
-    }
+    function renameSlot(id, old, next) { if(next && next!==old) { cpq.catalog[id].items[next]=cpq.catalog[id].items[old]; delete cpq.catalog[old]; renderCatalog(); } }
 
-    // --- Order Management (Upgraded for QTY & LineTotal) ---
     function initOrderFilters() {
         const now = new Date();
         const sy = document.getElementById('sel-year'); const sm = document.getElementById('sel-month');
@@ -195,83 +203,21 @@
         const m = document.getElementById('sel-month').value.padStart(2, '0');
         const container = document.getElementById('orders-list');
         let monthlySum = 0;
-        
         const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`));
-
         if(filtered.length === 0) {
-            container.innerHTML = "<div style='text-align:center;padding:60px;color:#999;'>No orders found for this period.</div>";
+            container.innerHTML = "<div style='text-align:center;padding:60px;color:#999;'>No orders found.</div>";
             document.getElementById('month-total').innerText = cpq.settings.currency + " 0";
             return;
         }
-
-        container.innerHTML = `<table>
-            <thead>
-                <tr>
-                    <th style="width:100px;">Date</th>
-                    <th style="width:250px;">Customer Contact</th>
-                    <th>Quotation Items & Qty</th>
-                    <th style="width:160px;">Total Amount</th>
-                    <th style="width:160px;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${filtered.map((o, idx) => {
-                    // 计算该订单总额用于月统计
-                    const priceNum = parseFloat(o.price.replace(/[^0-9.]/g,'')) || 0;
-                    monthlySum += priceNum;
-                    
-                    const isFollowed = o.status === 'followed';
-                    const cur = cpq.settings.currency;
-
-                    // 渲染项目列表 (支持新架构：unit_price, qty, line_total)
-                    let itemsHtml = "";
-                    if (o.items && Array.isArray(o.items)) {
-                        itemsHtml = o.items.map(it => {
-                            const unit = it.unit_price || it.price; // 兼容旧数据
-                            const qty = it.qty || 1;
-                            const lineTotal = it.line_total || (unit * qty);
-                            return `
-                                <div style="font-size:12px; border-bottom:1px solid #f5f5f5; padding:6px 0; display:flex; justify-content:space-between;">
-                                    <div>
-                                        <strong>${it.desc}</strong> <br>
-                                        <span style="color:#666; font-size:11px;">${it.seg} | ${cur}${unit.toLocaleString()} x ${qty}</span>
-                                    </div>
-                                    <div style="font-weight:bold;">${cur}${lineTotal.toLocaleString()}</div>
-                                </div>
-                            `;
-                        }).join('');
-                    }
-
-                    // Contact Links
-                    const cleanPhone = o.phone ? o.phone.replace(/\D/g, '') : '';
-                    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent('Hi '+o.name+', following up on your quotation for '+o.price)}`;
-                    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${o.email}&su=Quotation Follow-up&body=Hi ${o.name}, following up on your quotation for ${o.price}`;
-
-                    return `<tr>
-                        <td style="font-size:12px; color:#666;">${o.date.split('T')[0]}<br><small>${o.date.split('T')[1].slice(0,5)}</small></td>
-                        <td>
-                            <strong style="color:var(--azure);">${o.name}</strong><br>
-                            <div style="margin-top:5px;">
-                                <a href="${waUrl}" target="_blank" style="color:var(--whatsapp); text-decoration:none; font-size:11px; display:block; margin-bottom:3px;">💬 ${o.phone || 'No Phone'}</a>
-                                <a href="${gmailUrl}" target="_blank" style="color:var(--azure); text-decoration:none; font-size:11px; display:block;">📧 ${o.email || 'No Email'}</a>
-                            </div>
-                        </td>
-                        <td>${itemsHtml}</td>
-                        <td style="text-align:right;">
-                            <div style="font-size:11px; color:#888;">Sub: ${o.subtotal}</div>
-                            <div style="font-size:11px; color:#d13438;">Tax: ${o.tax}</div>
-                            <div style="font-size:18px; font-weight:bold; margin-top:5px;">${o.price}</div>
-                        </td>
-                        <td>
-                            <button class="btn" style="width:100%; background:${isFollowed?'#28a745':'#dc3545'}; color:white; font-size:11px;" 
-                                    onclick="toggleOrderStatus(${orders.indexOf(o)})">
-                                ${isFollowed ? 'FOLLOWED UP' : 'PENDING'}
-                            </button>
-                        </td>
-                    </tr>`;
-                }).join('')}
-            </tbody>
-        </table>`;
+        container.innerHTML = `<table><thead><tr><th>Date</th><th>Customer Contact</th><th>Quotation Items & Qty</th><th style="width:160px;">Total Amount</th><th style="width:160px;">Action</th></tr></thead>
+            <tbody>${filtered.map((o) => {
+                const priceNum = parseFloat(o.price.replace(/[^0-9.]/g,'')) || 0;
+                monthlySum += priceNum;
+                const isFollowed = o.status === 'followed';
+                const cur = cpq.settings.currency;
+                let itemsHtml = (o.items || []).map(it => `<div style="font-size:12px; border-bottom:1px solid #f5f5f5; padding:6px 0; display:flex; justify-content:space-between;"><div><strong>${it.desc}</strong><br><small>${cur}${(it.unit_price||it.price).toLocaleString()} x ${it.qty||1}</small></div><div style="font-weight:bold;">${cur}${(it.line_total||(it.price*(it.qty||1))).toLocaleString()}</div></div>`).join('');
+                return `<tr><td>${o.date.split('T')[0]}</td><td><strong>${o.name}</strong><br><small>${o.phone}</small></td><td>${itemsHtml}</td><td style="text-align:right;">${o.price}</td><td><button class="btn" style="width:100%; background:${isFollowed?'#28a745':'#dc3545'}; color:white; font-size:11px;" onclick="toggleOrderStatus(${orders.indexOf(o)})">${isFollowed?'FOLLOWED':'PENDING'}</button></td></tr>`;
+            }).join('')}</tbody></table>`;
         document.getElementById('month-total').innerText = cpq.settings.currency + " " + monthlySum.toLocaleString();
     }
 
@@ -283,10 +229,19 @@
 
     async function saveToAzure() {
         const btn = event.currentTarget; btn.disabled = true; btn.innerText = "Syncing...";
+        
+        // ✨ 更新 cpq 对象里的 settings 和 notes
         cpq.settings.langs = document.getElementById('conf-langs').value.split(',').map(s=>s.trim());
         cpq.settings.currency = document.getElementById('conf-currency').value;
         cpq.settings.tax_rate = parseFloat(document.getElementById('conf-tax').value);
         cpq.settings.brand_name = document.getElementById('conf-brand').value;
+        
+        // 获取 Note 内容
+        cpq.settings.notes = {
+            langs: document.getElementById('note-langs').value,
+            catalog: document.getElementById('note-catalog').value,
+            orders: document.getElementById('note-orders').value
+        };
         
         try {
             await Promise.all([
