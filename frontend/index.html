@@ -2,139 +2,121 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Azure Style Quote Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Quote System v5.5</title>
     <style>
-        :root { --azure-blue: #0078d4; --azure-light: #f2f2f2; --border-color: #cccccc; --text-main: #323130; --success: #107c10; }
+        :root { --azure-blue: #0078d4; --bg: #faf9f8; --border: #edebe9; --text: #323130; --danger: #a4262c; --success: #107c10; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #faf9f8; margin: 0; color: var(--text-main); }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); }
 
-        /* Azure Header Style */
-        .navbar { background: #001728; color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        /* Azure Header */
+        .navbar { background: #001728; color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .navbar b { font-size: 18px; letter-spacing: 0.5px; }
 
-        .main-container { max-width: 1200px; margin: 20px auto; display: grid; grid-template-columns: 1fr 380px; gap: 20px; padding: 0 15px; }
-        @media (max-width: 950px) { .main-container { grid-template-columns: 1fr; } }
+        .main-layout { max-width: 1200px; margin: 20px auto; display: grid; grid-template-columns: 1fr 380px; gap: 20px; padding: 0 15px; }
+        @media (max-width: 950px) { .main-layout { grid-template-columns: 1fr; } }
 
-        .config-card { background: white; border: 1px solid var(--border-color); border-radius: 2px; padding: 25px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,0.13); }
+        .panel { background: white; padding: 30px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         
-        /* Step Headers */
-        .step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #edebe9; padding-bottom: 10px; }
-        .step-num { background: var(--azure-blue); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
-        .step-title { font-weight: 600; font-size: 16px; color: var(--azure-blue); }
+        /* Step Badge */
+        .step-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; margin-top: 10px; }
+        .step-badge { background: var(--azure-blue); color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
+        .section-title { font-size: 15px; font-weight: 600; color: var(--azure-blue); text-transform: uppercase; margin: 0; }
 
-        /* Grid Items (Azure Style) */
-        .azure-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 25px; }
-        .azure-item { border: 1px solid #8a8886; padding: 15px; background: white; cursor: pointer; position: relative; transition: all 0.2s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .azure-item:hover { background: #f3f2f1; border-color: #323130; }
-        .azure-item.active { border: 2px solid var(--azure-blue); background: #eff6fc; padding: 14px; }
-        .azure-item.active::after { content: "✔"; position: absolute; top: 5px; right: 8px; color: var(--azure-blue); font-size: 12px; font-weight: bold; }
-        .azure-icon { font-size: 32px; }
-        .azure-label { font-size: 13px; font-weight: 600; text-align: center; }
+        /* Azure Grid Cards */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 30px; }
+        .card { border: 1px solid #8a8886; padding: 20px; border-radius: 2px; text-align: center; cursor: pointer; background: white; transition: 0.2s; position: relative; }
+        .card:hover { background: #f3f2f1; border-color: #323130; }
+        .card.active { border: 2px solid var(--azure-blue); background: #eff6fc; padding: 19px; }
+        .card.active::after { content: "✔"; position: absolute; top: 5px; right: 8px; color: var(--azure-blue); font-weight: bold; font-size: 12px; }
+        .card-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+        .card-text { font-size: 13px; font-weight: 600; line-height: 1.2; }
 
-        /* Input Fields */
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
-        input { width: 100%; padding: 8px 12px; border: 1px solid #605e5c; border-radius: 2px; font-size: 14px; }
+        input { width: 100%; padding: 10px 12px; border: 1px solid #605e5c; border-radius: 2px; font-size: 15px; margin-bottom: 12px; }
         input:focus { border-color: var(--azure-blue); outline: none; }
 
-        /* Cart Sidebar */
-        .sidebar { background: #f3f2f1; border: 1px solid var(--border-color); padding: 20px; position: sticky; top: 20px; }
-        .cart-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .cart-empty { text-align: center; color: #605e5c; padding: 40px 0; font-size: 14px; }
+        /* Sidebar Cart */
+        .sidebar { background: #f3f2f1; border: 1px solid var(--border); padding: 20px; position: sticky; top: 80px; }
+        .cart-item { background: white; padding: 12px; margin-bottom: 10px; border-left: 4px solid var(--azure-blue); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .cart-item b { display: block; font-size: 13px; color: var(--azure-blue); }
+        .cart-item small { color: #666; font-size: 11px; }
+        .remove-btn { color: var(--danger); border: none; background: none; font-size: 18px; cursor: pointer; padding: 0 10px; }
 
-        .cart-line { background: white; padding: 12px; border-left: 4px solid var(--azure-blue); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 0.8px 1.8px rgba(0,0,0,0.1); }
-        .cart-line-info b { font-size: 13px; color: var(--azure-blue); display: block; }
-        .cart-line-info small { font-size: 11px; color: #605e5c; }
-        .remove-btn { color: #a4262c; cursor: pointer; border: none; background: none; font-size: 18px; padding: 0 10px; }
+        .price-preview { background: #fff8f0; border-left: 4px solid #f2994a; padding: 15px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
 
-        /* Summary Area */
-        .summary-box { border-top: 1px solid var(--border-color); margin-top: 20px; padding-top: 15px; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-        .total-row { font-size: 22px; font-weight: 700; color: #000; margin-top: 10px; padding-top: 10px; border-top: 2px solid #323130; }
+        .summary { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px; }
+        .summary-line { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .grand-total { font-size: 22px; font-weight: bold; color: #000; border-top: 2px solid #333; padding-top: 10px; margin-top: 10px; }
 
-        /* Buttons (Azure Blue) */
-        .btn { width: 100%; padding: 12px; border-radius: 2px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
-        .btn-primary { background: var(--azure-blue); color: white; }
-        .btn-primary:hover { background: #005a9e; }
-        .btn-outline { background: white; color: var(--azure-blue); border: 1px solid var(--azure-blue); margin-top: 15px; }
-        .btn-outline:hover { background: #eff6fc; }
-        .btn:disabled { background: #c8c6c4; color: #a19f9d; border: none; cursor: not-allowed; }
-
-        .price-tag { color: var(--success); font-weight: bold; margin-top: 5px; font-size: 14px; }
+        .btn { width: 100%; border: none; padding: 15px; border-radius: 2px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-add { background: white; color: var(--azure-blue); border: 1px solid var(--azure-blue); }
+        .btn-add:hover { background: #eff6fc; }
+        .btn-submit { background: var(--azure-blue); color: white; margin-top: 15px; }
+        .btn-submit:hover { background: #005a9e; }
+        .btn:disabled { background: #edebe9; color: #a19f9d; border: none; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
 <div class="navbar">
     <div style="display:flex; align-items:center; gap:10px;">
-        <span style="font-size:24px;">☁️</span>
-        <b id="brand-name">Azure Quote System</b>
+        <span>☁️</span> <b id="brand-text">Azure Quote System</b>
     </div>
     <div class="lang-bar" id="langs"></div>
 </div>
 
-<div class="main-container">
-    <div class="config-card">
-        <div class="step-header">
-            <div class="step-num">1</div>
-            <div class="step-title" id="t-info">Customer Information</div>
+<div class="main-layout">
+    <div class="panel">
+        <div class="step-row">
+            <div class="step-badge">1</div>
+            <div class="section-title" id="t-info">Client Information</div>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
-            <div class="input-group">
-                <label id="l-name">Full Name</label>
-                <input type="text" id="cust-name">
-            </div>
-            <div class="input-group">
-                <label id="l-phone">Contact Number</label>
-                <input type="text" id="cust-phone" inputmode="tel">
-            </div>
-            <div class="input-group" style="grid-column: span 2;">
-                <label id="l-email">Email Address</label>
-                <input type="email" id="cust-email">
-            </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <input type="text" id="cust-name" placeholder="Name">
+            <input type="text" id="cust-phone" placeholder="Phone" inputmode="tel">
         </div>
+        <input type="email" id="cust-email" placeholder="Email Address">
 
-        <div class="step-header">
-            <div class="step-num">2</div>
-            <div class="step-title" id="t-cat">Select Service Plan</div>
+        <div class="step-row">
+            <div class="step-badge">2</div>
+            <div class="section-title" id="t-cat">Service Plan</div>
         </div>
-        <div class="azure-grid" id="cat-grid"></div>
+        <div class="grid" id="cat-grid"></div>
 
-        <div class="step-header">
-            <div class="step-num">3</div>
-            <div class="step-title" id="t-seg">Select Identity</div>
+        <div class="step-row">
+            <div class="step-badge">3</div>
+            <div class="section-title" id="t-seg">Identity</div>
         </div>
-        <div class="azure-grid" id="seg-grid"></div>
+        <div class="grid" id="seg-grid"></div>
 
         <div id="item-section" style="display:none;">
-            <div class="step-header">
-                <div class="step-num">4</div>
-                <div class="step-title" id="t-item">Selection Details</div>
+            <div class="step-row">
+                <div class="step-badge">4</div>
+                <div class="section-title" id="t-item">Selection</div>
             </div>
-            <div class="azure-grid" id="item-grid"></div>
+            <div class="grid" id="item-grid"></div>
         </div>
 
-        <div id="unit-price-box" style="display:none; background:#fff8f0; padding:15px; border-left:4px solid #f2994a; margin-top:20px;">
-            <span style="font-size:12px; font-weight:bold; color:#605e5c;" id="t-est">ESTIMATED PRICE:</span><br>
-            <span id="unit-price-val" style="font-size:24px; font-weight:700; color:#323130;">--</span>
+        <div id="price-box" style="display:none;" class="price-preview">
+            <span style="font-weight:bold; font-size:12px;" id="lbl-est">ESTIMATED:</span>
+            <b id="preview-val" style="font-size:20px;">--</b>
         </div>
 
-        <button class="btn btn-outline" id="btn-add" onclick="addToCart()" disabled>+ Add to Estimate</button>
+        <button class="btn btn-add" id="btn-add" onclick="addToCart()" disabled>+ Add to Estimate</button>
     </div>
 
     <div class="sidebar">
-        <div class="cart-title">🛒 <span id="t-cart-label">Estimate Summary</span></div>
+        <div class="section-title" id="t-cart" style="margin-bottom:20px; color:#323130;">🛒 Estimate Summary</div>
         <div id="cart-list"></div>
-        <div id="empty-msg" class="cart-empty">Your estimate is empty. Add services from the left.</div>
+        <div id="empty-msg" style="text-align:center; padding:30px 0; color:#605e5c; font-size:13px;">No services added yet.</div>
         
         <div id="summary-area" style="display:none;">
-            <div class="summary-box">
-                <div class="summary-row"><span>Subtotal</span><span id="sum-sub">--</span></div>
-                <div class="summary-row"><span>Tax (<span id="sum-tax-rate">0</span>%)</span><span id="sum-tax-amt">--</span></div>
-                <div class="total-row"><span>Total</span><span id="sum-total">--</span></div>
+            <div class="summary">
+                <div class="summary-line"><span>Subtotal</span><span id="sum-sub">--</span></div>
+                <div class="summary-line"><span>Tax (<span id="sum-tax-rate">0</span>%)</span><span id="sum-tax-amt">--</span></div>
+                <div class="summary-line grand-total"><span id="t-total-label">Total</span><span id="sum-total">--</span></div>
             </div>
-            <button class="btn btn-primary" style="margin-top:20px;" onclick="doSubmit()">Export & Print Quote</button>
+            <button class="btn btn-submit" onclick="doSubmit()">Generate & Print PDF</button>
         </div>
     </div>
 </div>
@@ -145,18 +127,23 @@
     let state = { lang: 'en', cat: null, seg: null, item: null };
     let cart = [];
 
-    // --- 图标映射表 (根据你的 CAT_ 和 SEG_ Key 自动分配图标) ---
+    // 图标映射
     const ICON_MAP = {
         'CAT_PERSONAL': '👤', 'CAT_GROUP': '👥',
         'SEG_ELDER': '👴', 'SEG_YOUTH': '👱', 'SEG_KID': '👶', 'SEG_MEMBER': '💎', 'SEG_NONMEMBER': '👤'
     };
 
     async function init() {
-        const t = Date.now();
-        const [r1, r2] = await Promise.all([fetch(`${API}?type=cpq&t=${t}`), fetch(`${API}?type=langs&t=${t}`)]);
-        db.cpq = await r1.json(); db.langs = await r2.json();
+        const t_now = Date.now();
+        const [r1, r2] = await Promise.all([
+            fetch(`${API}?type=cpq&t=${t_now}`),
+            fetch(`${API}?type=langs&t=${t_now}`)
+        ]);
+        db.cpq = await r1.json();
+        db.langs = await r2.json();
         state.lang = db.cpq.settings.langs[0];
-        renderLangs(); updateUI();
+        renderLangs();
+        updateUI();
     }
 
     function t(key, fb) { return (db.langs[key] && db.langs[key][state.lang]) ? db.langs[key][state.lang] : (fb || key); }
@@ -164,55 +151,54 @@
     function changeLang(l) { state.lang = l; renderLangs(); updateUI(); renderCart(); }
 
     function updateUI() {
-        document.getElementById('brand-name').innerText = db.cpq.settings.brand_name;
+        document.getElementById('brand-text').innerText = db.cpq.settings.brand_name;
         document.getElementById('t-info').innerText = t('UI_NAME_LABEL', 'Customer Info');
-        document.getElementById('l-name').innerText = t('UI_NAME_LABEL', 'Full Name');
-        document.getElementById('l-phone').innerText = t('UI_PHONE_LABEL', 'Contact');
-        document.getElementById('l-email').innerText = t('UI_EMAIL_LABEL', 'Email');
-        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN', 'Select Service');
-        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE', 'Select Identity');
+        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN', 'Service Plan');
+        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE', 'Identity');
         document.getElementById('t-total-label').innerText = t('UI_TOTAL', 'Total');
 
-        // Render Service Plan (CAT)
-        document.getElementById('cat-grid').innerHTML = Object.values(db.cpq.catalog).map(p => `
-            <div class="azure-item ${state.cat===p.i18n?'active':''}" onclick="select('cat', '${p.i18n}')">
-                <div class="azure-icon">${ICON_MAP[p.i18n] || '📦'}</div>
-                <div class="azure-label">${t(p.i18n)}</div>
+        // 1. Service Plan (CAT)
+        const cats = Object.values(db.cpq.catalog);
+        document.getElementById('cat-grid').innerHTML = cats.map(p => `
+            <div class="card ${state.cat===p.i18n?'active':''}" onclick="select('cat', '${p.i18n}')">
+                <span class="card-icon">${ICON_MAP[p.i18n] || '📦'}</span>
+                <span class="card-text">${t(p.i18n)}</span>
             </div>
         `).join('');
 
-        // Render Identity (SEG)
-        const selectedProd = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat);
+        // 2. Identity (SEG)
         const segGrid = document.getElementById('seg-grid');
+        const selectedProd = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat);
         if (state.cat && selectedProd) {
             segGrid.innerHTML = selectedProd.segments.filter(s => s.startsWith('SEG_')).map(s => `
-                <div class="azure-item ${state.seg===s?'active':''}" onclick="select('seg', '${s}')">
-                    <div class="azure-icon">${ICON_MAP[s] || '👤'}</div>
-                    <div class="azure-label">${t(s)}</div>
+                <div class="card ${state.seg===s?'active':''}" onclick="select('seg', '${s}')">
+                    <span class="card-icon">${ICON_MAP[s] || '👤'}</span>
+                    <span class="card-text">${t(s)}</span>
                 </div>
             `).join('');
         } else {
-            segGrid.innerHTML = `<div style="grid-column:1/-1; padding:20px; color:#999; font-size:13px;">Please select a service above first.</div>`;
+            segGrid.innerHTML = `<div style="grid-column:1/-1; color:#999; font-size:12px; text-align:center; padding:20px;">Please select a Service Plan first</div>`;
         }
 
-        // Render Item Details
-        const itemSec = document.getElementById('item-section');
+        // 3. Item Options
+        const itemSection = document.getElementById('item-section');
         if (state.cat && state.seg && selectedProd) {
-            itemSec.style.display = 'block';
+            itemSection.style.display = 'block';
             document.getElementById('item-grid').innerHTML = Object.keys(selectedProd.items).map(k => `
-                <div class="azure-item ${state.item===k?'active':''}" onclick="select('item', '${k}')">
-                    <div class="azure-icon">⚡</div>
-                    <div class="azure-label">${k}</div>
+                <div class="card ${state.item===k?'active':''}" onclick="select('item', '${k}')">
+                    <span class="card-icon">⚡</span>
+                    <span class="card-text">${k}</span>
                 </div>
             `).join('');
-        } else { itemSec.style.display = 'none'; }
+        } else {
+            itemSection.style.display = 'none';
+        }
 
         // Price Preview
-        const priceBox = document.getElementById('unit-price-box');
+        const priceBox = document.getElementById('price-box');
         if (state.cat && state.seg && state.item && selectedProd) {
-            const price = selectedProd.items[state.item];
-            document.getElementById('unit-price-val').innerText = `${db.cpq.settings.currency} ${price.toLocaleString()}`;
-            priceBox.style.display = 'block';
+            priceBox.style.display = 'flex';
+            document.getElementById('preview-val').innerText = `${db.cpq.settings.currency} ${selectedProd.items[state.item].toLocaleString()}`;
             document.getElementById('btn-add').disabled = false;
         } else {
             priceBox.style.display = 'none';
@@ -220,57 +206,52 @@
         }
     }
 
-    function select(type, val) { state[type] = val; if(type==='cat'){state.seg=null; state.item=null;} if(type==='seg'){state.item=null;} updateUI(); }
+    function select(type, val) {
+        state[type] = val;
+        if(type==='cat'){ state.seg=null; state.item=null; }
+        if(type==='seg'){ state.item=null; }
+        updateUI();
+    }
 
     function addToCart() {
         const prod = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat);
         cart.push({ id: Date.now(), desc: t(state.cat), opt: state.item, seg: t(state.seg), price: prod.items[state.item] });
         renderCart();
-        if(window.innerWidth < 950) document.getElementById('cart-list').scrollIntoView({ behavior: 'smooth' });
+        if(window.innerWidth < 950) document.getElementById('t-cart').scrollIntoView({ behavior: 'smooth' });
     }
 
     function removeFromCart(id) { cart = cart.filter(i => i.id !== id); renderCart(); }
 
     function renderCart() {
         const list = document.getElementById('cart-list');
+        const sumArea = document.getElementById('summary-area');
         const empty = document.getElementById('empty-msg');
-        const sum = document.getElementById('summary-area');
-        if(cart.length === 0){ list.innerHTML=""; empty.style.display="block"; sum.style.display="none"; return; }
-        empty.style.display="none"; sum.style.display="block";
-        list.innerHTML = cart.map(i => `
-            <div class="cart-line">
-                <div class="cart-line-info"><b>${i.desc} - ${i.opt}</b><small>${i.seg}</small></div>
-                <div style="display:flex; align-items:center;">
-                    <span style="font-weight:700; font-size:14px;">${db.cpq.settings.currency}${i.price.toLocaleString()}</span>
-                    <button class="remove-btn" onclick="removeFromCart(${i.id})">×</button>
-                </div>
-            </div>
-        `).join('');
-
-        const sub = cart.reduce((a,i) => a+i.price, 0);
-        const taxRate = parseFloat(db.cpq.settings.tax_rate)||0;
-        const taxAmt = sub * (taxRate/100);
-        const cur = db.cpq.settings.currency;
-        document.getElementById('sum-sub').innerText = `${cur} ${sub.toLocaleString()}`;
+        if (cart.length === 0) { list.innerHTML = ""; sumArea.style.display = 'none'; empty.style.display = 'block'; return; }
+        empty.style.display = 'none'; sumArea.style.display = 'block';
+        list.innerHTML = cart.map(i => `<div class="cart-item"><div><b>${i.desc} (${i.opt})</b><small>${i.seg}</small></div><div>${db.cpq.settings.currency}${i.price.toLocaleString()}<button class="remove-btn" onclick="removeFromCart(${i.id})">×</button></div></div>`).join('');
+        const sub = cart.reduce((a, i) => a + i.price, 0);
+        const taxRate = parseFloat(db.cpq.settings.tax_rate) || 0;
+        const tax = sub * (taxRate / 100);
+        document.getElementById('sum-sub').innerText = `${db.cpq.settings.currency} ${sub.toLocaleString()}`;
         document.getElementById('sum-tax-rate').innerText = taxRate;
-        document.getElementById('sum-tax-amt').innerText = `${cur} ${taxAmt.toLocaleString()}`;
-        document.getElementById('sum-total').innerText = `${cur} ${(sub+taxAmt).toLocaleString()}`;
+        document.getElementById('sum-tax-amt').innerText = `${db.cpq.settings.currency} ${tax.toLocaleString()}`;
+        document.getElementById('sum-total').innerText = `${db.cpq.settings.currency} ${(sub + tax).toLocaleString()}`;
     }
 
     async function doSubmit() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        if(!name || !phone || cart.length === 0) return alert(t('UI_SELECT_TYPE', "Complete details first!"));
+        if(!name || !phone || cart.length === 0) return alert("Please fill all info.");
         const order = { name, phone, email: document.getElementById('cust-email').value, items: cart.map(i => ({ desc: `${i.desc} (${i.opt})`, seg: i.seg, price: i.price })), subtotal: document.getElementById('sum-sub').innerText, tax: document.getElementById('sum-tax-amt').innerText, price: document.getElementById('sum-total').innerText, status: "pending", date: new Date().toISOString() };
         printPDF(order);
         await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
-        alert(t('UI_SUCCESS')); cart=[]; renderCart(); window.scrollTo(0,0);
+        alert(t('UI_SUCCESS')); cart = []; renderCart(); window.scrollTo(0,0);
     }
 
     function printPDF(o) {
         const w = window.open('', '_blank');
         const cur = db.cpq.settings.currency;
-        w.document.write(`<html><head><style>body{font-family:'Segoe UI',sans-serif;padding:40px;color:#333;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border-bottom:1px solid #eee;padding:12px;text-align:left;}.grand{font-size:24px;font-weight:bold;border-top:2px solid #323130;padding-top:10px;text-align:right;}</style></head><body><h1>${db.cpq.settings.brand_name}</h1><p><b>Client:</b> ${o.name} (${o.phone})</p><table><thead><tr><th>Service Description</th><th>Identity</th><th>Amount</th></tr></thead><tbody>${o.items.map(i => `<tr><td>${i.desc}</td><td>${i.seg}</td><td>${cur}${i.price.toLocaleString()}</td></tr>`).join('')}</tbody></table><div style="text-align:right"><p>Subtotal: ${o.subtotal}</p><p>Tax: ${o.tax}</p><div class="grand">TOTAL: ${o.price}</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`);
+        w.document.write(`<html><head><style>body{font-family:sans-serif;padding:30px;color:#333;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border-bottom:1px solid #eee;padding:12px;text-align:left;}.grand{font-size:22px;font-weight:bold;border-top:2px solid #333;display:inline-block;padding-top:10px;width:100%;text-align:right;}</style></head><body><h1>${db.cpq.settings.brand_name}</h1><p><strong>${o.name}</strong><br>${o.phone}</p><table><thead><tr><th>Description</th><th>Identity</th><th>Price</th></tr></thead><tbody>${o.items.map(i => `<tr><td>${i.desc}</td><td>${i.seg}</td><td>${cur}${i.price.toLocaleString()}</td></tr>`).join('')}</tbody></table><div style="text-align:right"><p>Subtotal: ${o.subtotal}</p><p>Tax: ${o.tax}</p><div class="grand">TOTAL: ${o.price}</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`);
         w.document.close();
     }
     init();
