@@ -196,7 +196,7 @@
                 <th style="width:100px;">Date</th>
                 <th style="width:220px;">Customer / Contact</th>
                 <th>Quotation Items</th>
-                <th style="width:120px;">Total Price</th>
+                <th style="width:140px;">Pricing Details</th>
                 <th style="width:160px;">Status Action</th>
             </tr>
         </thead>
@@ -208,12 +208,10 @@
                 const btnStyle = isFollowed ? 'background:#28a745;' : 'background:#dc3545;';
                 const btnText = isFollowed ? 'Followed Up' : 'Pending Follow-up';
 
-                // --- 核心：处理多产品显示逻辑 ---
                 let itemsHtml = "";
-                let summaryDesc = ""; // 用于发送信息时的描述
+                let summaryDesc = "";
                 
                 if (o.items && Array.isArray(o.items)) {
-                    // 购物车模式：显示多行
                     itemsHtml = o.items.map(it => `
                         <div style="font-size:12px; border-bottom:1px solid #f0f0f0; padding:4px 0;">
                             <strong>${it.desc}</strong> <br>
@@ -222,21 +220,15 @@
                     `).join('');
                     summaryDesc = `${o.items.length} items`;
                 } else {
-                    // 兼容旧模式
                     itemsHtml = `<div><strong>${o.cat || '-'}</strong><br><small>${o.seg || '-'}</small></div>`;
                     summaryDesc = o.cat || 'Order';
                 }
 
-                // --- 自动化跟进逻辑 ---
                 const cleanPhone = o.phone ? o.phone.replace(/\D/g, '') : '';
                 const cName = o.name || 'Customer';
                 const brand = cpq.settings.brand_name || 'Our Team';
-
-                // WhatsApp 跟进 (文案适配多项目)
                 const waText = encodeURIComponent(`Hi ${cName}, I'm following up on your inquiry for ${summaryDesc} (${o.price}). Let me know if you have any questions!`);
                 const waUrl = `https://wa.me/${cleanPhone}?text=${waText}`;
-
-                // Gmail 网页版跟进
                 const mailSub = encodeURIComponent(`Quotation Follow-up: ${summaryDesc}`);
                 const mailBody = encodeURIComponent(`Hi ${cName},\n\nI'm following up on your recent inquiry for ${summaryDesc} with a total of ${o.price}.\n\nPlease let us know if you have any questions or would like to proceed.\n\nBest regards,\n${brand}`);
                 const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${o.email}&su=${mailSub}&body=${mailBody}`;
@@ -251,7 +243,13 @@
                         </div>
                     </td>
                     <td>${itemsHtml}</td>
-                    <td style="font-weight:bold; color:#000; font-size:15px;">${o.price}</td>
+                    <td>
+                        <div style="color:#666; font-size:11px;">Sub: ${o.subtotal || '-'}</div>
+                        <div style="color:#d13438; font-size:11px;">Tax: ${o.tax || '-'}</div>
+                        <div style="font-weight:bold; color:#000; font-size:15px; border-top:1px solid #eee; margin-top:3px; padding-top:3px;">
+                            ${o.price}
+                        </div>
+                    </td>
                     <td>
                         <button class="btn" style="${btnStyle} color:white; font-size:11px; width:100%; border:none; padding:10px; border-radius:4px; cursor:pointer; font-weight:bold;" 
                                 onclick="toggleOrderStatus(${orders.indexOf(o)})">
