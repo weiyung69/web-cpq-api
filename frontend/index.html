@@ -38,7 +38,7 @@
         .qty-val { font-size: 18px; font-weight: bold; min-width: 30px; text-align: center; }
 
         .sidebar { background: #f3f2f1; border: 1px solid var(--border); padding: 20px; position: sticky; top: 80px; }
-        .cart-item { background: white; padding: 12px; margin-bottom: 10px; border-left: 4px solid var(--azure-blue); }
+        .cart-item { background: white; padding: 0; margin-bottom: 10px; border-left: 4px solid var(--azure-blue); overflow: hidden; }
         .remove-btn { color: var(--danger); border: none; background: none; font-size: 20px; cursor: pointer; }
 
         .price-preview { background: #fff8f0; border-left: 4px solid #f2994a; padding: 15px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
@@ -147,7 +147,6 @@
     function updateUI() {
         document.getElementById('brand-text').innerText = db.cpq.settings.brand_name;
         
-        // ✨ 这里修正了：直接读取带 Emoji 的完整翻译
         document.getElementById('t-info-label').innerText = t('UI_NAME_LABEL');
         document.getElementById('t-plan-label').innerText = t('UI_SELECT_PLAN');
         document.getElementById('t-type-label').innerText = t('UI_SELECT_TYPE');
@@ -227,6 +226,16 @@
         renderCart(); updateUI();
     }
 
+    // ✨ 这里是修复的核心逻辑：侧边栏购物车加减
+    function updateCartQty(id, delta) {
+        const item = cart.find(i => i.id === id);
+        if (item) {
+            item.qty = Math.max(1, item.qty + delta);
+            item.line_total = item.unit_price * item.qty;
+            renderCart();
+        }
+    }
+
     function removeFromCart(id) { cart = cart.filter(i => i.id !== id); renderCart(); }
 
     function renderCart() {
@@ -236,18 +245,27 @@
         if (cart.length === 0) { list.innerHTML = ""; sumArea.style.display = 'none'; empty.style.display = 'block'; return; }
         empty.style.display = 'none'; sumArea.style.display = 'block';
         const cur = db.cpq.settings.currency;
+        
         list.innerHTML = cart.map(i => `
             <div class="cart-item">
                 <div style="padding:12px; width:100%;">
-                    <div style="display:flex; justify-content:space-between;"><b>${i.desc} (${i.opt})</b><button class="remove-btn" onclick="removeFromCart(${i.id})">×</button></div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <b>${i.desc} (${i.opt})</b>
+                        <button class="remove-btn" onclick="removeFromCart(${i.id})">×</button>
+                    </div>
                     <small>${i.seg}</small>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                        <span style="font-size:13px; font-weight:bold;">Qty: ${i.qty}</span>
+                        <div style="display:flex; align-items:center; gap:8px; background:#f3f2f1; padding:2px 8px; border-radius:2px;">
+                            <button onclick="updateCartQty(${i.id}, -1)" style="border:none; background:none; cursor:pointer; font-weight:bold;">-</button>
+                            <span style="font-size:13px; font-weight:bold;">${i.qty}</span>
+                            <button onclick="updateCartQty(${i.id}, 1)" style="border:none; background:none; cursor:pointer; font-weight:bold;">+</button>
+                        </div>
                         <span style="font-weight:bold; color:var(--azure-blue);">${cur}${i.line_total.toLocaleString()}</span>
                     </div>
                 </div>
             </div>
         `).join('');
+        
         const sub = cart.reduce((a, i) => a + i.line_total, 0);
         const taxRate = parseFloat(db.cpq.settings.tax_rate) || 0;
         const taxAmt = sub * (taxRate / 100);
