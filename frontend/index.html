@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,23 +9,17 @@
         body { font-family: -apple-system, 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #333; }
         .app-container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
         .brand { text-align: center; font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 25px; }
-        
         .lang-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 25px; }
         .lang-btn { border: 1px solid #ddd; background: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; }
         .lang-btn.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: bold; }
-
         .section-title { font-size: 14px; font-weight: bold; margin: 25px 0 12px; display: flex; align-items: center; }
         .section-title::after { content: ""; flex: 1; height: 1px; background: #eee; margin-left: 10px; }
-
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .card { border: 2px solid #f0f0f0; padding: 16px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.2s; background: #fafafa; }
         .card.active { border-color: var(--primary); background: #f0f7ff; color: var(--primary); font-weight: bold; }
-
         input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
-        
         .footer-price { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
         .price-val { font-size: 24px; font-weight: 800; color: #000; }
-
         .submit-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; }
         .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
     </style>
@@ -36,26 +30,26 @@
     <div id="brand" class="brand">--</div>
     <div class="lang-bar" id="langs"></div>
 
-    <div class="section-title" id="t-info">Maklumat Peribadi</div>
-    <input type="text" id="cust-name" placeholder="Nama Penuh">
-    <input type="text" id="cust-phone" placeholder="Nombor Telefon">
-    <input type="email" id="cust-email" placeholder="Alamat Emel">
+    <div class="section-title" id="t-info">Personal Info</div>
+    <input type="text" id="cust-name" placeholder="Name">
+    <input type="text" id="cust-phone" placeholder="Phone Number">
+    <input type="email" id="cust-email" placeholder="Email Address">
 
-    <div class="section-title" id="t-seg">Kategori</div>
+    <div class="section-title" id="t-seg">Identity</div>
     <div class="grid" id="seg-grid"></div>
 
-    <div class="section-title" id="t-cat">Pelan Perkhidmatan</div>
+    <div class="section-title" id="t-cat">Service Plan</div>
     <div class="grid" id="cat-grid"></div>
 
-    <div class="section-title" id="t-item" style="display:none;">Pilihan</div>
+    <div class="section-title" id="t-item" style="display:none;">Selection</div>
     <div class="grid" id="item-grid"></div>
 
     <div class="footer-price">
-        <div id="t-total">Jumlah Keseluruhan</div>
+        <div id="t-total">Total Amount</div>
         <div class="price-val" id="display-price">--</div>
     </div>
 
-    <button class="submit-btn" id="btn-submit" onclick="doSubmit()" disabled>Jana & Cetak Sebut Harga</button>
+    <button class="submit-btn" id="btn-submit" onclick="doSubmit()" disabled>Generate & Print Quote</button>
 </div>
 
 <script>
@@ -76,7 +70,10 @@
         updateUI();
     }
 
-    function t(key) { return (db.langs[key] && db.langs[key][state.lang]) ? db.langs[key][state.lang] : key; }
+    function t(key, fallback) { 
+        if (db.langs[key] && db.langs[key][state.lang]) return db.langs[key][state.lang];
+        return fallback || key; 
+    }
 
     function renderLangs() {
         document.getElementById('langs').innerHTML = db.cpq.settings.langs.map(l => 
@@ -88,36 +85,33 @@
 
     function updateUI() {
         document.getElementById('brand').innerText = db.cpq.settings.brand_name;
-        document.getElementById('t-info').innerText = t('UI_NAME_LABEL');
-        document.getElementById('cust-name').placeholder = t('UI_NAME_LABEL');
-        document.getElementById('cust-phone').placeholder = t('UI_PHONE_LABEL');
-        document.getElementById('cust-email').placeholder = t('UI_EMAIL_LABEL');
-        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE');
-        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN');
-        document.getElementById('t-total').innerText = t('UI_TOTAL');
-        document.getElementById('btn-submit').innerText = t('UI_SUBMIT');
+        document.getElementById('t-info').innerText = t('UI_NAME_LABEL', 'Personal Info');
+        document.getElementById('cust-name').placeholder = t('UI_NAME_LABEL', 'Name');
+        document.getElementById('cust-phone').placeholder = t('UI_PHONE_LABEL', 'Phone Number');
+        document.getElementById('cust-email').placeholder = t('UI_EMAIL_LABEL', 'Email Address');
+        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE', 'Identity');
+        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN', 'Service Plan');
+        document.getElementById('t-total').innerText = t('UI_TOTAL', 'Total Amount');
+        document.getElementById('btn-submit').innerText = t('UI_SUBMIT', 'Generate & Print Quote');
 
-        // 渲染 Identity
         const segs = new Set();
         Object.values(db.cpq.catalog).forEach(p => p.segments.filter(s=>s.startsWith('SEG_')).forEach(s=>segs.add(s)));
         document.getElementById('seg-grid').innerHTML = Array.from(segs).map(s => `
             <div class="card ${state.seg===s?'active':''}" onclick="select('seg', '${s}')">${t(s)}</div>
         `).join('');
 
-        // 渲染 Plan
         const cats = Object.values(db.cpq.catalog).filter(p => !state.seg || p.segments.includes(state.seg));
         document.getElementById('cat-grid').innerHTML = cats.map(p => `
             <div class="card ${state.cat===p.i18n?'active':''}" onclick="select('cat', '${p.i18n}')">${t(p.i18n)}</div>
         `).join('');
 
-        // 渲染 Item Options
         const itemTitle = document.getElementById('t-item');
         const itemGrid = document.getElementById('item-grid');
         if (state.cat) {
             const prod = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat && p.segments.includes(state.seg));
             if (prod && Object.keys(prod.items).length > 0) {
                 itemTitle.style.display = 'flex';
-                itemTitle.innerText = t('UI_SELECT_OPTION');
+                itemTitle.innerText = t('UI_SELECT_OPTION', 'Selection');
                 itemGrid.innerHTML = Object.keys(prod.items).map(k => `
                     <div class="card ${state.item===k?'active':''}" onclick="select('item', '${k}')">${k}</div>
                 `).join('');
@@ -155,7 +149,7 @@
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
         const email = document.getElementById('cust-email').value;
-        if(!name || !phone) return alert("Sila isi Nama dan No Telefon");
+        if(!name || !phone) return alert("Please fill in Name and Phone Number");
 
         const order = {
             name: name,
@@ -170,7 +164,7 @@
 
         printPDF(order);
         await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
-        alert(t('UI_SUCCESS'));
+        alert(t('UI_SUCCESS', 'Submitted Successfully!'));
     }
 
     function printPDF(o) {
@@ -187,7 +181,7 @@
             <head>
                 <style>
                     @page { size: A4; margin: 20mm; }
-                    body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #333; line-height: 1.5; padding: 20px; }
+                    body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.5; padding: 20px; }
                     .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 30px; }
                     .brand { font-size: 28px; font-weight: bold; }
                     .info { display: flex; justify-content: space-between; margin-bottom: 40px; }
@@ -204,20 +198,25 @@
             <body>
                 <div class="header">
                     <div class="brand">${db.cpq.settings.brand_name}</div>
-                    <div style="color:#666">QUOTATION / SEBUT HARGA</div>
+                    <div style="color:#666">${t('UI_TITLE', 'QUOTATION').toUpperCase()}</div>
                 </div>
                 <div class="info">
                     <div>
-                        <div class="label">${t('UI_NAME_LABEL')}</div><strong>${o.name}</strong><br>
-                        <div class="label" style="margin-top:10px">${t('UI_PHONE_LABEL')}</div>${o.phone}<br>
-                        ${o.email ? `<div class="label" style="margin-top:10px">${t('UI_EMAIL_LABEL')}</div>${o.email}` : ''}
+                        <div class="label">${t('UI_NAME_LABEL', 'Full Name')}</div><strong>${o.name}</strong><br>
+                        <div class="label" style="margin-top:10px">${t('UI_PHONE_LABEL', 'Phone Number')}</div>${o.phone}<br>
+                        ${o.email ? `<div class="label" style="margin-top:10px">${t('UI_EMAIL_LABEL', 'Email')}</div>${o.email}` : ''}
                     </div>
                     <div style="text-align:right">
-                        <div class="label">Tarikh</div>${today}
+                        <div class="label">${state.lang === 'ms' ? 'Tarikh' : (state.lang === 'cn' ? '日期' : 'Date')}</div>${today}
                     </div>
                 </div>
                 <table>
-                    <thead><tr><th>DESCRIPTION / PENERANGAN</th><th style="text-align:right">AMOUNT / HARGA</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>${state.lang === 'ms' ? 'PENERANGAN' : (state.lang === 'cn' ? '项目说明' : 'DESCRIPTION')}</th>
+                            <th style="text-align:right">${state.lang === 'ms' ? 'JUMLAH' : (state.lang === 'cn' ? '金额' : 'AMOUNT')}</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         <tr>
                             <td><strong>${o.cat}</strong><br><small>${o.seg}</small></td>
@@ -227,14 +226,14 @@
                 </table>
                 <div class="total-box">
                     <div class="total-row"><span>Subtotal:</span><span>${currency} ${subtotal.toLocaleString()}</span></div>
-                    <div class="total-row"><span>Cukai / Tax (${taxRate}%):</span><span>${currency} ${taxAmount.toLocaleString()}</span></div>
-                    <div class="total-row grand-total"><span>${t('UI_TOTAL')}:</span><span>${currency} ${total.toLocaleString()}</span></div>
+                    <div class="total-row"><span>${state.lang === 'ms' ? 'Cukai' : (state.lang === 'cn' ? '税额' : 'Tax')} (${taxRate}%):</span><span>${currency} ${taxAmount.toLocaleString()}</span></div>
+                    <div class="total-row grand-total"><span>${t('UI_TOTAL', 'Total Amount')}:</span><span>${currency} ${total.toLocaleString()}</span></div>
                 </div>
                 <div class="terms">
-                    <strong>Terma & Syarat / Terms & Conditions</strong><br>
-                    1. Sah selama 30 hari dari tarikh jana.<br>
-                    2. Pembayaran penuh diperlukan sebelum perkhidmatan dimulakan.<br>
-                    3. Sila hubungi kami untuk sebarang pertanyaan lanjut.
+                    <strong>${state.lang === 'ms' ? 'Terma & Syarat' : (state.lang === 'cn' ? '条款与条例' : 'Terms & Conditions')}</strong><br>
+                    ${state.lang === 'cn' ? '1. 有效期为30天。<br>2. 服务前需全额付款。<br>3. 如有任何疑问，请联系我们。' : 
+                      state.lang === 'ms' ? '1. Sah selama 30 hari dari tarikh sebut harga.<br>2. Pembayaran penuh diperlukan sebelum perkhidmatan.<br>3. Sila hubungi kami jika ada sebarang pertanyaan.' : 
+                      '1. Valid for 30 days.<br>2. Full payment required before service.<br>3. Contact us for any questions.'}
                 </div>
                 <script>window.onload=function(){window.print();}<\/script>
             </body>
