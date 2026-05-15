@@ -25,14 +25,17 @@
         .section-title { font-size: 14px; font-weight: 600; color: var(--azure-blue); text-transform: uppercase; margin: 0; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 30px; }
-        .card { border: 1px solid #8a8886; padding: 20px; border-radius: 2px; text-align: center; cursor: pointer; background: white; transition: 0.2s; position: relative; }
+        
+        /* ✨ Card 样式升级：支持图标与文字分离 */
+        .card { border: 1px solid #8a8886; padding: 15px; border-radius: 2px; text-align: center; cursor: pointer; background: white; transition: 0.2s; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 110px; }
         .card:hover { background: #f3f2f1; border-color: #323130; }
-        .card.active { border: 2px solid var(--azure-blue); background: #eff6fc; padding: 19px; }
+        .card.active { border: 2px solid var(--azure-blue); background: #eff6fc; }
         .card.active::after { content: "✔"; position: absolute; top: 5px; right: 8px; color: var(--azure-blue); font-weight: bold; font-size: 12px; }
-        .card-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+        
+        .card-emoji { font-size: 32px; margin-bottom: 8px; line-height: 1; }
         .card-text { font-size: 13px; font-weight: 600; line-height: 1.2; }
 
-        input { width: 100%; padding: 10px 12px; border: 1px solid #605e5c; border-radius: 2px; font-size: 15px; margin-bottom: 12px; }
+        input { width: 100%; padding: 12px; border: 1px solid #605e5c; border-radius: 2px; font-size: 15px; margin-bottom: 12px; }
         
         .qty-row { display: flex; align-items: center; gap: 15px; margin-top: 20px; padding: 15px; background: #f3f2f1; border-radius: 2px; }
         .qty-btn { width: 36px; height: 36px; border: 1px solid #8a8886; background: white; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
@@ -66,10 +69,10 @@
     <div class="panel">
         <div class="step-row"><div class="step-badge">1</div><div class="section-title" id="t-info">Client Info</div></div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <input type="text" id="cust-name" placeholder="Name">
-            <input type="text" id="cust-phone" placeholder="Phone" inputmode="tel">
+            <input type="text" id="cust-name" onplaceholder="updatePlaceholder('UI_NAME_LABEL', this)">
+            <input type="text" id="cust-phone" inputmode="tel">
         </div>
-        <input type="email" id="cust-email" placeholder="Email">
+        <input type="email" id="cust-email">
 
         <div class="step-row"><div class="step-badge">2</div><div class="section-title" id="t-cat">Service Plan</div></div>
         <div class="grid" id="cat-grid"></div>
@@ -90,7 +93,7 @@
                 <button class="qty-btn" onclick="updateQty(1)">+</button>
             </div>
             <div class="price-preview">
-                <span style="font-weight:bold; font-size:12px;">ESTIMATED TOTAL:</span>
+                <span style="font-weight:bold; font-size:12px;" id="lbl-est">ESTIMATED TOTAL:</span>
                 <b id="preview-val" style="font-size:20px;">--</b>
             </div>
         </div>
@@ -109,7 +112,7 @@
                 <div class="summary-line"><span>Tax (<span id="sum-tax-rate">0</span>%)</span><span id="sum-tax-amt">--</span></div>
                 <div class="summary-line grand-total"><span id="t-total-label">Total</span><span id="sum-total">--</span></div>
             </div>
-            <button class="btn btn-submit" onclick="doSubmit()">Generate & Print PDF</button>
+            <button class="btn btn-submit" id="t-submit-btn" onclick="doSubmit()">Generate & Print PDF</button>
         </div>
     </div>
 </div>
@@ -120,8 +123,6 @@
     let state = { lang: 'en', cat: null, seg: null, item: null, qty: 1 };
     let cart = [];
 
-    const ICON_MAP = { 'CAT_PERSONAL': '👤', 'CAT_GROUP': '👥', 'SEG_ELDER': '👴', 'SEG_YOUTH': '👱', 'SEG_KID': '👶', 'SEG_MEMBER': '💎', 'SEG_NONMEMBER': '👤' };
-
     async function init() {
         const t_now = Date.now();
         const [r1, r2] = await Promise.all([fetch(`${API}?type=cpq&t=${t_now}`), fetch(`${API}?type=langs&t=${t_now}`)]);
@@ -131,27 +132,60 @@
     }
 
     function t(key, fb) { return (db.langs[key] && db.langs[key][state.lang]) ? db.langs[key][state.lang] : (fb || key); }
+    
+    // ✨ 新增渲染函数：处理 Emoji 拆分
+    function createCardHTML(id, isActive, clickFn) {
+        const fullText = t(id);
+        const parts = fullText.split(' ');
+        const emoji = parts[0]; 
+        const label = parts.slice(1).join(' ');
+
+        return `
+            <div class="card ${isActive ? 'active' : ''}" onclick="${clickFn}">
+                <div class="card-emoji">${emoji}</div>
+                <div class="card-text">${label}</div>
+            </div>
+        `;
+    }
+
     function renderLangs() { document.getElementById('langs').innerHTML = db.cpq.settings.langs.map(l => `<button class="lang-btn ${l===state.lang?'active':''}" onclick="changeLang('${l}')">${l.toUpperCase()}</button>`).join(''); }
     function changeLang(l) { state.lang = l; renderLangs(); updateUI(); renderCart(); }
 
     function updateUI() {
         document.getElementById('brand-text').innerText = db.cpq.settings.brand_name;
-        document.getElementById('t-info').innerText = t('UI_NAME_LABEL', 'Client Info');
-        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN', 'Service Plan');
-        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE', 'Identity');
+        document.getElementById('t-info').innerText = t('UI_NAME_LABEL');
+        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN');
+        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE');
+        document.getElementById('t-total-label').innerText = t('UI_TOTAL');
+        document.getElementById('t-submit-btn').innerText = t('UI_SUBMIT');
         
-        document.getElementById('cat-grid').innerHTML = Object.values(db.cpq.catalog).sort((a,b)=>a.sort-b.sort).map(p => `<div class="card ${state.cat===p.i18n?'active':''}" onclick="select('cat', '${p.i18n}')"><span class="card-icon">${ICON_MAP[p.i18n]||'📦'}</span><span class="card-text">${t(p.i18n)}</span></div>`).join('');
+        // 更新 Input Placeholder (带 Emoji)
+        document.getElementById('cust-name').placeholder = t('UI_NAME_LABEL');
+        document.getElementById('cust-phone').placeholder = t('UI_PHONE_LABEL');
+        document.getElementById('cust-email').placeholder = t('UI_EMAIL_LABEL');
+        
+        // 渲染 CAT & SEG Grids (使用新拆分逻辑)
+        document.getElementById('cat-grid').innerHTML = Object.values(db.cpq.catalog).sort((a,b)=>a.sort-b.sort).map(p => 
+            createCardHTML(p.i18n, state.cat === p.i18n, `select('cat', '${p.i18n}')`)
+        ).join('');
         
         const selectedProd = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat);
         const segGrid = document.getElementById('seg-grid');
         if (state.cat && selectedProd) {
-            segGrid.innerHTML = selectedProd.segments.filter(s => s.startsWith('SEG_')).map(s => `<div class="card ${state.seg===s?'active':''}" onclick="select('seg', '${s}')"><span class="card-icon">${ICON_MAP[s]||'👤'}</span><span class="card-text">${t(s)}</span></div>`).join('');
+            segGrid.innerHTML = selectedProd.segments.map(s => 
+                createCardHTML(s, state.seg === s, `select('seg', '${s}')`)
+            ).join('');
         } else { segGrid.innerHTML = `<div style="grid-column:1/-1; color:#999; text-align:center; padding:10px;">Please Select Plan</div>`; }
 
         const itemSec = document.getElementById('item-section');
         if (state.cat && state.seg && selectedProd) {
             itemSec.style.display = 'block';
-            document.getElementById('item-grid').innerHTML = Object.keys(selectedProd.items).map(k => `<div class="card ${state.item===k?'active':''}" onclick="select('item', '${k}')"><span class="card-icon">⚡</span><span class="card-text">${k}</span></div>`).join('');
+            document.getElementById('t-item').innerText = t('UI_SELECT_OPTION');
+            document.getElementById('item-grid').innerHTML = Object.keys(selectedProd.items).map(k => `
+                <div class="card ${state.item===k?'active':''}" onclick="select('item', '${k}')">
+                    <div class="card-emoji">⚡</div>
+                    <div class="card-text">${k}</div>
+                </div>`).join('');
         } else { itemSec.style.display = 'none'; }
 
         const priceBox = document.getElementById('price-box');
@@ -184,7 +218,6 @@
         const itemOpt = state.item;
         const itemSeg = t(state.seg);
 
-        // 合并逻辑：检查右边是否已有完全一样的项
         const existing = cart.find(i => i.desc === itemDesc && i.opt === itemOpt && i.seg === itemSeg);
         if (existing) {
             existing.qty += state.qty;
@@ -193,7 +226,7 @@
             cart.push({ id: Date.now(), desc: itemDesc, opt: itemOpt, seg: itemSeg, unit_price: unitPrice, qty: state.qty, line_total: unitPrice * state.qty });
         }
         
-        state.qty = 1; document.getElementById('qty-display').innerText = 1; // 重置左边数量
+        state.qty = 1; document.getElementById('qty-display').innerText = 1;
         renderCart(); updateUI();
     }
 
