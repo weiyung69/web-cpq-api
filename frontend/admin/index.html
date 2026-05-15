@@ -230,7 +230,7 @@
                 const cur = cpq.settings.currency;
                 
                 // WhatsApp 话术
-                const msg = encodeURIComponent(`Hi ${o.name}, I'm from ${cpq.settings.brand_name}. I received your quote request for ${o.items[0].desc}. Can I help you?`);
+                const msg = encodeURIComponent(`Hi ${o.name}, I'm from ${cpq.settings.brand_name}. I received your quote request for ${o.items[0].desc} with Total ${o.price}. Can I help you?`);
                 
                 // Gmail 网页版链接（带收件人和主题）
                 const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${o.email}&su=${encodeURIComponent('Quotation from ' + cpq.settings.brand_name)}`;
