@@ -27,12 +27,15 @@
         th { background: #f3f2f1; padding: 12px; border: 1px solid var(--border); font-size: 12px; text-align: left; }
         td { border: 1px solid var(--border); padding: 12px; vertical-align: top; }
 
-        /* ✨ 联系按钮专属样式 */
+        /* ✨ 修改后的链接样式 */
+        .contact-link { text-decoration: none; color: var(--azure); font-size: 13px; display: block; margin-top: 3px; }
+        .contact-link:hover { text-decoration: underline; }
+        .wa-text { color: #128C7E; font-weight: bold; }
+        .gm-text { color: #DB4437; font-weight: bold; }
+
         .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-size: 12px; }
         .btn-primary { background: var(--azure); color: white; }
         .btn-danger { color: var(--danger); background: none; border: 1px solid var(--danger); }
-        .btn-wa { background: var(--whatsapp); color: white; width: 100%; margin-bottom: 5px; }
-        .btn-mail { background: #555; color: white; width: 100%; }
         
         .filter-bar { background:#f3f2f1; padding:15px; margin-bottom:15px; border-radius:4px; display:flex; gap:15px; align-items:center; font-size:13px; }
         .footer { position: sticky; bottom: 0; background: white; padding: 20px; border-top: 1px solid #ddd; text-align: right; margin-top: 20px; z-index: 10; }
@@ -149,8 +152,8 @@
             </tr>
         `).join('');
     }
-    function addLibKey() { const k = prompt("Key ID (e.g., SEG_MEMBER):"); if(k && !langs[k]) { langs[k]={}; renderLangs(); } }
-    function deleteTag(k) { if(confirm("Delete this translation?")) { delete langs[k]; renderLangs(); } }
+    function addLibKey() { const k = prompt("Key ID:"); if(k && !langs[k]) { langs[k]={}; renderLangs(); } }
+    function deleteTag(k) { if(confirm("Delete?")) { delete langs[k]; renderLangs(); } }
     function renameTag(oldK, newK) { if(newK && newK!==oldK) { langs[newK]=langs[oldK]; delete langs[oldK]; renderLangs(); } }
 
     function renderCatalog() {
@@ -170,22 +173,14 @@
                     <div><label>SORT</label><input type="number" value="${p.sort||0}" onchange="cpq.catalog['${id}'].sort=parseInt(this.value)"></div>
                     <button class="btn-danger" onclick="deleteProd('${id}')">DELETE</button>
                 </div>
-                <div style="margin-bottom:15px;">
-                    <label style="font-size:11px; font-weight:bold; color:#666">ASSIGN DIMENSIONS</label>
-                    <div class="tag-container">
-                        ${Object.keys(langs).filter(k => k.startsWith('SEG_') || k.startsWith('CAT_')).map(tag => `
-                            <span class="tag ${(p.segments || []).includes(tag)?'active':''}" onclick="toggleTag('${id}', '${tag}')">${tag}</span>
-                        `).join('')}
-                    </div>
-                </div>
                 <div id="items-${id}">${Object.entries(p.items).map(([n,v]) => `
                     <div class="price-row">
-                        <input type="text" value="${n}" onblur="renameSlot('${id}','${n}',this.value)" placeholder="e.g. Adult 1 Session">
+                        <input type="text" value="${n}" onblur="renameSlot('${id}','${n}',this.value)">
                         <input type="number" value="${v}" onchange="cpq.catalog['${id}'].items['${n}']=parseInt(this.value)">
                         <button class="btn-danger" onclick="deleteSlot('${id}','${n}')">×</button>
                     </div>`).join('')}
                 </div>
-                <button class="btn btn-primary" style="font-size:11px;" onclick="addPriceSlot('${id}')">+ Add New Price Item</button>
+                <button class="btn btn-primary" style="font-size:11px;" onclick="addPriceSlot('${id}')">+ Add Price Item</button>
             `;
             container.appendChild(card);
         });
@@ -199,9 +194,9 @@
     }
 
     function addProd() { const id = "p_"+Date.now().toString().slice(-4); cpq.catalog[id]={i18n:"",sort:9,segments:[],items:{"Standard Item":0}}; renderCatalog(); }
-    function deleteProd(id) { if(confirm("Delete Product Group?")) { delete cpq.catalog[id]; renderCatalog(); } }
+    function deleteProd(id) { if(confirm("Delete?")) { delete cpq.catalog[id]; renderCatalog(); } }
     function renameProd(old, next) { if(next && next!==old) { cpq.catalog[next]=cpq.catalog[old]; delete cpq.catalog[old]; renderCatalog(); } }
-    function addPriceSlot(id) { const n=prompt("Item Name (e.g. Member - Adult):"); if(n) { cpq.catalog[id].items[n]=0; renderCatalog(); } }
+    function addPriceSlot(id) { const n=prompt("Name:"); if(n) { cpq.catalog[id].items[n]=0; renderCatalog(); } }
     function deleteSlot(id, s) { delete cpq.catalog[id].items[s]; renderCatalog(); }
     function renameSlot(id, old, next) { if(next && next!==old) { cpq.catalog[id].items[next]=cpq.catalog[id].items[old]; delete cpq.catalog[id].items[old]; renderCatalog(); } }
 
@@ -213,13 +208,13 @@
         for(let i=1; i<=12; i++) sm.innerHTML += `<option value="${i}" ${i===(now.getMonth()+1)?'selected':''}>${i<10?'0'+i:i}</option>`;
     }
 
-    // ✨ 这里的渲染逻辑已经针对 Tab 3 进行了精准补全，增加了 WhatsApp 和 Email 按钮
+    // ✨ 这里的渲染逻辑修改：显示文本号码/Email，a 标签直接跳转 Gmail/WA
     function renderOrders() {
         const y = document.getElementById('sel-year').value;
         const m = document.getElementById('sel-month').value.padStart(2, '0');
         const container = document.getElementById('orders-list');
         let monthlySum = 0;
-        const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`)).reverse(); // 倒序显示最新
+        const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`)).reverse();
 
         if(filtered.length === 0) {
             container.innerHTML = "<div style='text-align:center;padding:60px;color:#999;'>No orders found.</div>";
@@ -237,15 +232,19 @@
                 // WhatsApp 话术
                 const msg = encodeURIComponent(`Hi ${o.name}, I'm from ${cpq.settings.brand_name}. I received your quote request for ${o.items[0].desc}. Can I help you?`);
                 
+                // Gmail 网页版链接（带收件人和主题）
+                const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${o.email}&su=${encodeURIComponent('Quotation from ' + cpq.settings.brand_name)}`;
+
                 let itemsHtml = (o.items || []).map(it => `<div style="font-size:12px; border-bottom:1px solid #f5f5f5; padding:6px 0; display:flex; justify-content:space-between;"><div><strong>${it.desc}</strong><br><small>${cur}${(it.unit_price||it.price).toLocaleString()} x ${it.qty||1}</small></div><div style="font-weight:bold;">${cur}${(it.line_total||(it.price*(it.qty||1))).toLocaleString()}</div></div>`).join('');
                 
                 return `<tr>
                     <td>${o.date.split('T')[0]}</td>
                     <td>
                         <strong>${o.name}</strong><br>
-                        <div style="margin-top:8px;">
-                            <a href="https://wa.me/${o.phone}?text=${msg}" target="_blank" class="btn btn-wa">💬 WhatsApp</a>
-                            <a href="mailto:${o.email}" class="btn btn-mail" style="margin-top:5px;">📧 Email</a>
+                        <div style="margin-top:5px; font-size:13px;">
+                            ${o.phone} <a href="https://wa.me/${o.phone}?text=${msg}" target="_blank" class="contact-link wa-text">💬 WhatsApp</a>
+                            <div style="margin-top:5px;"></div>
+                            ${o.email} <a href="${gmailLink}" target="_blank" class="contact-link gm-text">📧 Gmail</a>
                         </div>
                     </td>
                     <td>${itemsHtml}</td>
