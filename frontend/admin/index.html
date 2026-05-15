@@ -177,73 +177,93 @@
     }
 
     function renderOrders() {
-        const y = document.getElementById('sel-year').value;
-        const m = document.getElementById('sel-month').value.padStart(2, '0');
-        const container = document.getElementById('orders-list');
-        let sum = 0;
-        
-        const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`));
+    const y = document.getElementById('sel-year').value;
+    const m = document.getElementById('sel-month').value.padStart(2, '0');
+    const container = document.getElementById('orders-list');
+    let sum = 0;
+    
+    const filtered = orders.filter(o => o.date && o.date.startsWith(`${y}-${m}`));
 
-        if(filtered.length === 0) {
-            container.innerHTML = "<p style='text-align:center;padding:40px;color:#999;'>No orders found.</p>";
-            document.getElementById('month-total').innerText = cpq.settings.currency + " 0";
-            return;
-        }
-
-        container.innerHTML = `<table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Customer / Contact</th>
-                    <th>Identity</th>
-                    <th>Product Description</th>
-                    <th>Price</th>
-                    <th>Status Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${filtered.map((o) => {
-                    sum += parseFloat(o.price.replace(/[^0-9.]/g,'')) || 0;
-                    const isFollowed = o.status === 'followed';
-                    const btnStyle = isFollowed ? 'background:#28a745;' : 'background:#dc3545;';
-                    const btnText = isFollowed ? 'Followed Up' : 'Pending Follow-up';
-
-                    // --- 自动化跟进逻辑 ---
-                    const cleanPhone = o.phone ? o.phone.replace(/\D/g, '') : '';
-                    const cName = o.name || 'Customer';
-                    const brand = cpq.settings.brand_name || 'Our Team';
-
-                    // WhatsApp 跟进
-                    const waText = encodeURIComponent(`Hi ${cName}, I'm following up on your inquiry for ${o.cat} (${o.price}). Let me know if you have any questions!`);
-                    const waUrl = `https://wa.me/${cleanPhone}?text=${waText}`;
-
-                    // Gmail 网页版跟进 (view=cm 表示 Compose Mode)
-                    const mailSub = encodeURIComponent(`Inquiry Follow-up: ${o.cat}`);
-                    const mailBody = encodeURIComponent(`Hi ${cName},\n\nI'm following up on your recent inquiry for ${o.cat} (${o.price}).\n\nPlease let us know if you have any questions or would like to proceed.\n\nBest regards,\n${brand}`);
-                    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${o.email}&su=${mailSub}&body=${mailBody}`;
-
-                    return `<tr>
-                        <td>${o.date.split('T')[0]}</td>
-                        <td>
-                            <strong style="font-size:14px; color:#333;">${o.name}</strong><br>
-                            ${o.phone ? `<a href="${waUrl}" target="_blank" class="contact-link" style="color:var(--whatsapp)"><span>💬</span> ${o.phone}</a>` : '<small style="color:#ccc;">🚫 No Phone</small>'}
-                            ${o.email ? `<a href="${gmailUrl}" target="_blank" class="contact-link" style="color:var(--azure)"><span>📧</span> ${o.email}</a>` : '<small style="color:#ccc;">🚫 No Email</small>'}
-                        </td>
-                        <td><span style="font-size:13px;">${o.seg}</span></td>
-                        <td><span style="font-size:13px;">${o.cat}</span></td>
-                        <td style="font-weight:bold;">${o.price}</td>
-                        <td>
-                            <button class="btn" style="${btnStyle} color:white; font-size:11px; width:150px; border:none; padding:8px; border-radius:4px; cursor:pointer;" 
-                                    onclick="toggleOrderStatus(${orders.indexOf(o)})">
-                                ${btnText}
-                            </button>
-                        </td>
-                    </tr>`;
-                }).join('')}
-            </tbody>
-        </table>`;
-        document.getElementById('month-total').innerText = cpq.settings.currency + " " + sum.toLocaleString();
+    if(filtered.length === 0) {
+        container.innerHTML = "<p style='text-align:center;padding:40px;color:#999;'>No orders found.</p>";
+        document.getElementById('month-total').innerText = cpq.settings.currency + " 0";
+        return;
     }
+
+    container.innerHTML = `<table>
+        <thead>
+            <tr>
+                <th style="width:100px;">Date</th>
+                <th style="width:220px;">Customer / Contact</th>
+                <th>Quotation Items</th>
+                <th style="width:120px;">Total Price</th>
+                <th style="width:160px;">Status Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${filtered.map((o) => {
+                const priceNum = parseFloat(o.price.replace(/[^0-9.]/g,'')) || 0;
+                sum += priceNum;
+                const isFollowed = o.status === 'followed';
+                const btnStyle = isFollowed ? 'background:#28a745;' : 'background:#dc3545;';
+                const btnText = isFollowed ? 'Followed Up' : 'Pending Follow-up';
+
+                // --- 核心：处理多产品显示逻辑 ---
+                let itemsHtml = "";
+                let summaryDesc = ""; // 用于发送信息时的描述
+                
+                if (o.items && Array.isArray(o.items)) {
+                    // 购物车模式：显示多行
+                    itemsHtml = o.items.map(it => `
+                        <div style="font-size:12px; border-bottom:1px solid #f0f0f0; padding:4px 0;">
+                            <strong>${it.desc}</strong> <br>
+                            <span style="color:#666; font-size:11px;">${it.seg} - ${cpq.settings.currency}${it.price.toLocaleString()}</span>
+                        </div>
+                    `).join('');
+                    summaryDesc = `${o.items.length} items`;
+                } else {
+                    // 兼容旧模式
+                    itemsHtml = `<div><strong>${o.cat || '-'}</strong><br><small>${o.seg || '-'}</small></div>`;
+                    summaryDesc = o.cat || 'Order';
+                }
+
+                // --- 自动化跟进逻辑 ---
+                const cleanPhone = o.phone ? o.phone.replace(/\D/g, '') : '';
+                const cName = o.name || 'Customer';
+                const brand = cpq.settings.brand_name || 'Our Team';
+
+                // WhatsApp 跟进 (文案适配多项目)
+                const waText = encodeURIComponent(`Hi ${cName}, I'm following up on your inquiry for ${summaryDesc} (${o.price}). Let me know if you have any questions!`);
+                const waUrl = `https://wa.me/${cleanPhone}?text=${waText}`;
+
+                // Gmail 网页版跟进
+                const mailSub = encodeURIComponent(`Quotation Follow-up: ${summaryDesc}`);
+                const mailBody = encodeURIComponent(`Hi ${cName},\n\nI'm following up on your recent inquiry for ${summaryDesc} with a total of ${o.price}.\n\nPlease let us know if you have any questions or would like to proceed.\n\nBest regards,\n${brand}`);
+                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${o.email}&su=${mailSub}&body=${mailBody}`;
+
+                return `<tr>
+                    <td style="font-size:13px;">${o.date.split('T')[0]}</td>
+                    <td>
+                        <strong style="font-size:14px; color:#333;">${o.name}</strong><br>
+                        <div style="margin-top:5px;">
+                            ${o.phone ? `<a href="${waUrl}" target="_blank" class="contact-link" style="color:var(--whatsapp); display:flex; align-items:center; gap:5px; text-decoration:none; font-size:12px;"><span>💬</span> ${o.phone}</a>` : '<small style="color:#ccc;">🚫 No Phone</small>'}
+                            ${o.email ? `<a href="${gmailUrl}" target="_blank" class="contact-link" style="color:var(--azure); display:flex; align-items:center; gap:5px; text-decoration:none; font-size:12px; margin-top:4px;"><span>📧</span> ${o.email}</a>` : '<small style="color:#ccc;">🚫 No Email</small>'}
+                        </div>
+                    </td>
+                    <td>${itemsHtml}</td>
+                    <td style="font-weight:bold; color:#000; font-size:15px;">${o.price}</td>
+                    <td>
+                        <button class="btn" style="${btnStyle} color:white; font-size:11px; width:100%; border:none; padding:10px; border-radius:4px; cursor:pointer; font-weight:bold;" 
+                                onclick="toggleOrderStatus(${orders.indexOf(o)})">
+                            ${btnText}
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('')}
+        </tbody>
+    </table>`;
+    document.getElementById('month-total').innerText = cpq.settings.currency + " " + sum.toLocaleString();
+}
 
     async function toggleOrderStatus(idx) {
         orders[idx].status = (orders[idx].status === 'followed') ? 'pending' : 'followed';
