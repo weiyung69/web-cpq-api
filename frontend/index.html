@@ -86,7 +86,7 @@
 
         <div id="price-box" style="display:none; flex-direction: column; gap: 10px;">
             <div class="qty-row">
-                <span style="font-weight:bold; font-size:12px; flex:1;">QUANTITY:</span>
+                <span style="font-weight:bold; font-size:12px; flex:1;" id="t-qty-label">QUANTITY:</span>
                 <button class="qty-btn" onclick="updateQty(-1)">−</button>
                 <span class="qty-val" id="qty-display">1</span>
                 <button class="qty-btn" onclick="updateQty(1)">+</button>
@@ -107,8 +107,8 @@
         
         <div id="summary-area" style="display:none;">
             <div class="summary">
-                <div class="summary-line"><span>Subtotal</span><span id="sum-sub">--</span></div>
-                <div class="summary-line"><span>Tax (<span id="sum-tax-rate">0</span>%)</span><span id="sum-tax-amt">--</span></div>
+                <div class="summary-line"><span id="t-subtotal">Subtotal</span><span id="sum-sub">--</span></div>
+                <div class="summary-line"><span id="t-tax-label">Tax</span> (<span id="sum-tax-rate">0</span>%)<span id="sum-tax-amt">--</span></div>
                 <div class="summary-line grand-total"><span id="t-total-label">Total</span><span id="sum-total">--</span></div>
             </div>
             <button class="btn btn-submit" id="t-submit-btn" onclick="doSubmit()">Generate & Print PDF</button>
@@ -132,20 +132,15 @@
 
     function t(key, fb) { return (db.langs[key] && db.langs[key][state.lang]) ? db.langs[key][state.lang] : (fb || key); }
     
-    // ✨ 智能渲染函数：带 Emoji 识别与默认补全逻辑
     function createCardHTML(text, isActive, clickFn) {
-        // 正则表达式：识别字符串开头的 Emoji
         const emojiRegex = /^(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/;
-        
-        let emoji = "😊"; // 默认兜底图标
+        let emoji = "😊"; 
         let label = text;
-
         if (emojiRegex.test(text)) {
             const parts = text.split(' ');
             emoji = parts[0];
             label = parts.slice(1).join(' ');
         }
-
         return `
             <div class="card ${isActive ? 'active' : ''}" onclick="${clickFn}">
                 <div class="card-emoji">${emoji}</div>
@@ -160,23 +155,35 @@
     function updateUI() {
         document.getElementById('brand-text').innerText = db.cpq.settings.brand_name;
         
-        // 标题与 Label 逻辑
-        const getLabel = (key) => {
+        const getLabelNoEmoji = (key) => {
             const raw = t(key);
-            return raw.split(' ').slice(1).join(' ') || raw;
+            const parts = raw.split(' ');
+            return parts.length > 1 ? parts.slice(1).join(' ') : raw;
         };
 
-        document.getElementById('t-info').innerText = getLabel('UI_NAME_LABEL');
-        document.getElementById('t-cat').innerText = getLabel('UI_SELECT_PLAN');
-        document.getElementById('t-seg').innerText = getLabel('UI_SELECT_TYPE');
-        document.getElementById('t-total-label').innerText = getLabel('UI_TOTAL');
-        document.getElementById('t-submit-btn').innerText = getLabel('UI_SUBMIT');
+        // 更新所有翻译文本
+        document.getElementById('t-info').innerText = getLabelNoEmoji('UI_NAME_LABEL');
+        document.getElementById('t-cat').innerText = getLabelNoEmoji('UI_SELECT_PLAN');
+        document.getElementById('t-seg').innerText = getLabelNoEmoji('UI_SELECT_TYPE');
+        document.getElementById('t-total-label').innerText = getLabelNoEmoji('UI_TOTAL');
+        document.getElementById('t-submit-btn').innerText = t('UI_SUBMIT');
         
+        // 侧边栏与空消息翻译
+        document.getElementById('t-cart').innerText = t('UI_TITLE');
+        document.getElementById('empty-msg').innerText = state.lang === 'cn' ? '暂未添加服务' : 'No services added yet.'; // 或者你在langs里加一个UI_EMPTY
+        
+        // 小计/数量翻译
+        document.getElementById('t-qty-label').innerText = state.lang === 'cn' ? '数量:' : 'QUANTITY:';
+        document.getElementById('lbl-est').innerText = getLabelNoEmoji('UI_TOTAL') + ":";
+        document.getElementById('t-subtotal').innerText = state.lang === 'cn' ? '小计' : 'Subtotal';
+        document.getElementById('t-tax-label').innerText = state.lang === 'cn' ? '税收' : 'Tax';
+
+        // Placeholder
         document.getElementById('cust-name').placeholder = t('UI_NAME_LABEL');
         document.getElementById('cust-phone').placeholder = t('UI_PHONE_LABEL');
         document.getElementById('cust-email').placeholder = t('UI_EMAIL_LABEL');
         
-        // Step 2 & 3 Grid
+        // Grid 渲染
         document.getElementById('cat-grid').innerHTML = Object.values(db.cpq.catalog).sort((a,b)=>a.sort-b.sort).map(p => 
             createCardHTML(t(p.i18n), state.cat === p.i18n, `select('cat', '${p.i18n}')`)
         ).join('');
@@ -187,26 +194,29 @@
             segGrid.innerHTML = selectedProd.segments.map(s => 
                 createCardHTML(t(s), state.seg === s, `select('seg', '${s}')`)
             ).join('');
-        } else { segGrid.innerHTML = `<div style="grid-column:1/-1; color:#999; text-align:center; padding:10px;">Please Select Plan</div>`; }
+        } else { segGrid.innerHTML = `<div style="grid-column:1/-1; color:#999; text-align:center; padding:10px;">Select Plan First</div>`; }
 
-        // Step 4 Grid
         const itemSec = document.getElementById('item-section');
         if (state.cat && state.seg && selectedProd) {
             itemSec.style.display = 'block';
-            document.getElementById('t-item').innerText = getLabel('UI_SELECT_OPTION');
+            document.getElementById('t-item').innerText = getLabelNoEmoji('UI_SELECT_OPTION');
             document.getElementById('item-grid').innerHTML = Object.keys(selectedProd.items).map(k => 
                 createCardHTML(k, state.item === k, `select('item', '${k}')`)
             ).join('');
         } else { itemSec.style.display = 'none'; }
 
-        // Price Logic
+        // 按钮与预览价格
         const priceBox = document.getElementById('price-box');
         if (state.cat && state.seg && state.item && selectedProd) {
             priceBox.style.display = 'flex';
             const unitPrice = selectedProd.items[state.item];
             document.getElementById('preview-val').innerText = `${db.cpq.settings.currency} ${(unitPrice * state.qty).toLocaleString()}`;
             document.getElementById('btn-add').disabled = false;
-        } else { priceBox.style.display = 'none'; document.getElementById('btn-add').disabled = true; }
+            document.getElementById('btn-add').innerText = (state.lang === 'cn' ? '+ 添加到预估' : '+ Add to Estimate');
+        } else { 
+            priceBox.style.display = 'none'; 
+            document.getElementById('btn-add').disabled = true; 
+        }
     }
 
     function select(type, val) { 
@@ -237,7 +247,6 @@
         } else {
             cart.push({ id: Date.now(), desc: itemDesc, opt: itemOpt, seg: itemSeg, unit_price: unitPrice, qty: state.qty, line_total: unitPrice * state.qty });
         }
-        
         state.qty = 1; document.getElementById('qty-display').innerText = 1;
         renderCart(); updateUI();
     }
@@ -293,7 +302,7 @@
     async function doSubmit() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        if(!name || !phone || cart.length === 0) return alert("Please fill Name & Phone.");
+        if(!name || !phone || cart.length === 0) return alert(state.lang === 'cn' ? "请填写姓名和电话。" : "Please fill Name & Phone.");
         const order = { 
             name, phone, email: document.getElementById('cust-email').value, 
             items: cart.map(i => ({ desc: `${i.desc} (${i.opt})`, seg: i.seg, unit_price: i.unit_price, qty: i.qty, line_total: i.line_total })), 
@@ -302,7 +311,8 @@
         };
         printPDF(order);
         await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
-        alert("Success!"); cart = []; renderCart(); window.scrollTo(0,0);
+        alert(t('UI_SUCCESS')); 
+        cart = []; renderCart(); window.scrollTo(0,0);
     }
 
     function printPDF(o) {
