@@ -2,60 +2,83 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instant Quote System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Quote System</title>
     <style>
-        :root { --primary: #0078d4; --bg: #f3f2f1; }
-        body { font-family: -apple-system, 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #333; }
-        .app-container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-        .brand { text-align: center; font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 25px; }
-        .lang-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 25px; }
-        .lang-btn { border: 1px solid #ddd; background: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; }
+        :root { --primary: #0078d4; --bg: #f3f2f1; --danger: #d13438; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #323130; line-height: 1.4; }
+        .main-layout { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 380px; gap: 15px; }
+        @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } body { padding: 8px; } }
+        .panel { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); height: fit-content; }
+        .brand { text-align: center; font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 15px; }
+        .lang-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; overflow-x: auto; }
+        .lang-btn { flex-shrink: 0; border: 1px solid #ddd; background: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; }
         .lang-btn.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: bold; }
-        .section-title { font-size: 14px; font-weight: bold; margin: 25px 0 12px; display: flex; align-items: center; }
+        .section-title { font-size: 13px; font-weight: bold; margin: 20px 0 10px; display: flex; align-items: center; color: #666; text-transform: uppercase; }
         .section-title::after { content: ""; flex: 1; height: 1px; background: #eee; margin-left: 10px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .card { border: 2px solid #f0f0f0; padding: 16px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.2s; background: #fafafa; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .card { border: 2px solid #f3f2f1; padding: 14px; border-radius: 10px; text-align: center; cursor: pointer; background: #fafafa; font-size: 14px; transition: 0.15s; }
         .card.active { border-color: var(--primary); background: #f0f7ff; color: var(--primary); font-weight: bold; }
-        input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
-        .footer-price { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .price-val { font-size: 24px; font-weight: 800; color: #000; }
-        .submit-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 20px; cursor: pointer; }
-        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 8px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+        .cart-item-info b { display: block; font-size: 14px; color: var(--primary); }
+        .cart-price { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .remove-btn { color: var(--danger); border: none; background: #fff5f5; font-size: 16px; cursor: pointer; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+        .summary { margin-top: 15px; border-top: 2px solid #f3f2f1; padding-top: 15px; }
+        .summary-line { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
+        .grand-total { font-size: 20px; font-weight: bold; color: #000; margin-top: 8px; padding-top: 8px; border-top: 2px solid #333; }
+        .btn { width: 100%; border: none; padding: 16px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-add { background: #f0f7ff; color: var(--primary); border: 1.5px solid var(--primary); margin-top: 15px; }
+        .btn-submit { background: var(--primary); color: white; margin-top: 12px; }
+        .btn:disabled { background: #edebe9; color: #a19f9d; border: none; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div id="brand" class="brand">--</div>
-    <div class="lang-bar" id="langs"></div>
+<div class="main-layout">
+    <div class="panel">
+        <div id="brand" class="brand">--</div>
+        <div class="lang-bar" id="langs"></div>
 
-    <div class="section-title" id="t-info">Personal Info</div>
-    <input type="text" id="cust-name" placeholder="Name">
-    <input type="text" id="cust-phone" placeholder="Phone Number">
-    <input type="email" id="cust-email" placeholder="Email Address">
+        <div class="section-title" id="t-info">Personal Info</div>
+        <input type="text" id="cust-name" placeholder="Name">
+        <input type="text" id="cust-phone" placeholder="Phone" inputmode="tel">
+        <input type="email" id="cust-email" placeholder="Email">
 
-    <div class="section-title" id="t-seg">Identity</div>
-    <div class="grid" id="seg-grid"></div>
+        <div class="section-title" id="t-cat">Service Plan</div>
+        <div class="grid" id="cat-grid"></div>
 
-    <div class="section-title" id="t-cat">Service Plan</div>
-    <div class="grid" id="cat-grid"></div>
+        <div class="section-title" id="t-seg">Identity</div>
+        <div class="grid" id="seg-grid"></div>
 
-    <div class="section-title" id="t-item" style="display:none;">Selection</div>
-    <div class="grid" id="item-grid"></div>
+        <div class="section-title" id="t-item" style="display:none;">Selection</div>
+        <div class="grid" id="item-grid"></div>
 
-    <div class="footer-price">
-        <div id="t-total">Total Amount</div>
-        <div class="price-val" id="display-price">--</div>
+        <button class="btn btn-add" id="btn-add" onclick="addToCart()" disabled>+ Add to Quote List</button>
     </div>
 
-    <button class="submit-btn" id="btn-submit" onclick="doSubmit()" disabled>Generate & Print Quote</button>
+    <div class="panel">
+        <div class="section-title" id="t-cart">Quotation List</div>
+        <div id="cart-list"></div>
+        <div id="empty-msg" style="text-align:center; padding:30px 0; color:#999; font-size:13px;">List is empty.</div>
+        
+        <div id="summary-area" style="display:none;">
+            <div class="summary">
+                <div class="summary-line"><span>Subtotal</span><span id="sum-sub">--</span></div>
+                <div class="summary-line"><span>Tax (<span id="sum-tax-rate">0</span>%)</span><span id="sum-tax-amt">--</span></div>
+                <div class="summary-line grand-total"><span id="t-total-label">Total</span><span id="sum-total">--</span></div>
+            </div>
+            <button class="btn btn-submit" onclick="doSubmit()">Confirm & Print</button>
+        </div>
+    </div>
 </div>
 
 <script>
     const API = "https://web-cpq-api-hufgbkfvbceyb3cj.malaysiawest-01.azurewebsites.net/api.php";
     let db = { cpq: null, langs: null };
-    let state = { lang: 'en', seg: null, cat: null, item: null };
+    let state = { lang: 'en', cat: null, seg: null, item: null };
+    let cart = [];
 
     async function init() {
         const t_now = Date.now();
@@ -70,178 +93,99 @@
         updateUI();
     }
 
-    function t(key, fallback) { 
-        if (db.langs[key] && db.langs[key][state.lang]) return db.langs[key][state.lang];
-        return fallback || key; 
-    }
-
-    function renderLangs() {
-        document.getElementById('langs').innerHTML = db.cpq.settings.langs.map(l => 
-            `<button class="lang-btn ${l===state.lang?'active':''}" onclick="changeLang('${l}')">${l.toUpperCase()}</button>`
-        ).join('');
-    }
-
-    function changeLang(l) { state.lang = l; renderLangs(); updateUI(); }
+    function t(key, fb) { return (db.langs[key] && db.langs[key][state.lang]) ? db.langs[key][state.lang] : (fb || key); }
+    function renderLangs() { document.getElementById('langs').innerHTML = db.cpq.settings.langs.map(l => `<button class="lang-btn ${l===state.lang?'active':''}" onclick="changeLang('${l}')">${l.toUpperCase()}</button>`).join(''); }
+    function changeLang(l) { state.lang = l; renderLangs(); updateUI(); renderCart(); }
 
     function updateUI() {
         document.getElementById('brand').innerText = db.cpq.settings.brand_name;
-        document.getElementById('t-info').innerText = t('UI_NAME_LABEL', 'Personal Info');
-        document.getElementById('cust-name').placeholder = t('UI_NAME_LABEL', 'Name');
-        document.getElementById('cust-phone').placeholder = t('UI_PHONE_LABEL', 'Phone Number');
-        document.getElementById('cust-email').placeholder = t('UI_EMAIL_LABEL', 'Email Address');
-        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE', 'Identity');
-        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN', 'Service Plan');
-        document.getElementById('t-total').innerText = t('UI_TOTAL', 'Total Amount');
-        document.getElementById('btn-submit').innerText = t('UI_SUBMIT', 'Generate & Print Quote');
+        document.getElementById('t-info').innerText = t('UI_NAME_LABEL');
+        document.getElementById('cust-name').placeholder = t('UI_NAME_LABEL');
+        document.getElementById('cust-phone').placeholder = t('UI_PHONE_LABEL');
+        document.getElementById('cust-email').placeholder = t('UI_EMAIL_LABEL');
+        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN');
+        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE');
+        document.getElementById('t-total-label').innerText = t('UI_TOTAL');
 
-        const segs = new Set();
-        Object.values(db.cpq.catalog).forEach(p => p.segments.filter(s=>s.startsWith('SEG_')).forEach(s=>segs.add(s)));
-        document.getElementById('seg-grid').innerHTML = Array.from(segs).map(s => `
-            <div class="card ${state.seg===s?'active':''}" onclick="select('seg', '${s}')">${t(s)}</div>
-        `).join('');
-
-        const cats = Object.values(db.cpq.catalog).filter(p => !state.seg || p.segments.includes(state.seg));
+        // 1. 渲染 Service Plan (CAT)
+        const cats = Object.values(db.cpq.catalog);
         document.getElementById('cat-grid').innerHTML = cats.map(p => `
             <div class="card ${state.cat===p.i18n?'active':''}" onclick="select('cat', '${p.i18n}')">${t(p.i18n)}</div>
         `).join('');
 
-        const itemTitle = document.getElementById('t-item');
-        const itemGrid = document.getElementById('item-grid');
-        if (state.cat) {
-            const prod = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat && p.segments.includes(state.seg));
-            if (prod && Object.keys(prod.items).length > 0) {
-                itemTitle.style.display = 'flex';
-                itemTitle.innerText = t('UI_SELECT_OPTION', 'Selection');
-                itemGrid.innerHTML = Object.keys(prod.items).map(k => `
-                    <div class="card ${state.item===k?'active':''}" onclick="select('item', '${k}')">${k}</div>
-                `).join('');
-            }
+        // 2. 根据选中的 CAT 过滤 Identity (SEG)
+        const segGrid = document.getElementById('seg-grid');
+        const selectedProd = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat);
+        if (state.cat && selectedProd) {
+            segGrid.innerHTML = selectedProd.segments.filter(s => s.startsWith('SEG_')).map(s => `
+                <div class="card ${state.seg===s?'active':''}" onclick="select('seg', '${s}')">${t(s)}</div>
+            `).join('');
         } else {
-            itemTitle.style.display = 'none';
+            segGrid.innerHTML = `<div style="grid-column:1/-1; color:#999; font-size:12px; text-align:center;">Please select a Service Plan first</div>`;
+        }
+
+        // 3. 渲染 Item Options
+        const itemGrid = document.getElementById('item-grid');
+        if (state.cat && state.seg && selectedProd) {
+            document.getElementById('t-item').style.display = 'flex';
+            itemGrid.innerHTML = Object.keys(selectedProd.items).map(k => `
+                <div class="card ${state.item===k?'active':''}" onclick="select('item', '${k}')">${k}</div>
+            `).join('');
+        } else {
+            document.getElementById('t-item').style.display = 'none';
             itemGrid.innerHTML = '';
         }
-        calcPrice();
+        document.getElementById('btn-add').disabled = !(state.cat && state.seg && state.item);
     }
 
     function select(type, val) {
         state[type] = val;
-        if(type === 'seg') { state.cat = null; state.item = null; }
-        if(type === 'cat') { state.item = null; }
+        if(type==='cat'){ state.seg=null; state.item=null; }
+        if(type==='seg'){ state.item=null; }
         updateUI();
     }
 
-    function calcPrice() {
-        const display = document.getElementById('display-price');
-        const btn = document.getElementById('btn-submit');
-        if(state.seg && state.cat && state.item) {
-            const prod = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat && p.segments.includes(state.seg));
-            if(prod && prod.items[state.item] !== undefined) {
-                display.innerText = db.cpq.settings.currency + " " + prod.items[state.item].toLocaleString();
-                btn.disabled = false;
-                return;
-            }
-        }
-        display.innerText = "--";
-        btn.disabled = true;
+    function addToCart() {
+        const prod = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat);
+        cart.push({ id: Date.now(), desc: t(state.cat), opt: state.item, seg: t(state.seg), price: prod.items[state.item] });
+        renderCart();
+        if(window.innerWidth < 900) document.getElementById('t-cart').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function removeFromCart(id) { cart = cart.filter(i => i.id !== id); renderCart(); }
+
+    function renderCart() {
+        const list = document.getElementById('cart-list');
+        const sumArea = document.getElementById('summary-area');
+        const empty = document.getElementById('empty-msg');
+        if (cart.length === 0) { list.innerHTML = ""; sumArea.style.display = 'none'; empty.style.display = 'block'; return; }
+        empty.style.display = 'none'; sumArea.style.display = 'block';
+        list.innerHTML = cart.map(i => `<div class="cart-item"><div><b>${i.desc} (${i.opt})</b><small>${i.seg}</small></div><div class="cart-price">${db.cpq.settings.currency}${i.price.toLocaleString()}<button class="remove-btn" onclick="removeFromCart(${i.id})">×</button></div></div>`).join('');
+        const sub = cart.reduce((a, i) => a + i.price, 0);
+        const taxRate = parseFloat(db.cpq.settings.tax_rate) || 0;
+        const tax = sub * (taxRate / 100);
+        document.getElementById('sum-sub').innerText = `${db.cpq.settings.currency} ${sub.toLocaleString()}`;
+        document.getElementById('sum-tax-rate').innerText = taxRate;
+        document.getElementById('sum-tax-amt').innerText = `${db.cpq.settings.currency} ${tax.toLocaleString()}`;
+        document.getElementById('sum-total').innerText = `${db.cpq.settings.currency} ${(sub + tax).toLocaleString()}`;
     }
 
     async function doSubmit() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        const email = document.getElementById('cust-email').value;
-        if(!name || !phone) return alert("Please fill in Name and Phone Number");
-
-        const order = {
-            name: name,
-            phone: phone,
-            email: email,
-            seg: t(state.seg), 
-            cat: t(state.cat) + " (" + state.item + ")", 
-            price: document.getElementById('display-price').innerText,
-            status: "pending", 
-            date: new Date().toISOString()
-        };
-
+        if(!name || !phone || cart.length === 0) return alert("Please fill all info.");
+        const order = { name, phone, email: document.getElementById('cust-email').value, items: cart.map(i => ({ desc: `${i.desc} (${i.opt})`, seg: i.seg, price: i.price })), subtotal: document.getElementById('sum-sub').innerText, tax: document.getElementById('sum-tax-amt').innerText, price: document.getElementById('sum-total').innerText, status: "pending", date: new Date().toISOString() };
         printPDF(order);
         await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
-        alert(t('UI_SUCCESS', 'Submitted Successfully!'));
+        alert(t('UI_SUCCESS')); cart = []; renderCart(); window.scrollTo(0,0);
     }
 
     function printPDF(o) {
         const w = window.open('', '_blank');
-        const today = new Date().toLocaleDateString();
-        const currency = db.cpq.settings.currency;
-        const taxRate = parseFloat(db.cpq.settings.tax_rate) || 0;
-        const subtotal = parseFloat(o.price.replace(/[^0-9.]/g, ''));
-        const taxAmount = subtotal * (taxRate / 100);
-        const total = subtotal + taxAmount;
-
-        w.document.write(`
-            <html>
-            <head>
-                <style>
-                    @page { size: A4; margin: 20mm; }
-                    body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.5; padding: 20px; }
-                    .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 30px; }
-                    .brand { font-size: 28px; font-weight: bold; }
-                    .info { display: flex; justify-content: space-between; margin-bottom: 40px; }
-                    .label { color: #888; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-                    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-                    th { background: #f4f4f4; text-align: left; padding: 12px; border-bottom: 2px solid #ddd; }
-                    td { padding: 12px; border-bottom: 1px solid #eee; }
-                    .total-box { text-align: right; margin-top: 20px; }
-                    .total-row { display: flex; justify-content: flex-end; gap: 30px; margin-bottom: 5px; font-size: 14px; }
-                    .grand-total { font-size: 22px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; margin-top: 10px; }
-                    .terms { margin-top: 50px; font-size: 11px; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <div class="brand">${db.cpq.settings.brand_name}</div>
-                    <div style="color:#666">${t('UI_TITLE', 'QUOTATION').toUpperCase()}</div>
-                </div>
-                <div class="info">
-                    <div>
-                        <div class="label">${t('UI_NAME_LABEL', 'Full Name')}</div><strong>${o.name}</strong><br>
-                        <div class="label" style="margin-top:10px">${t('UI_PHONE_LABEL', 'Phone Number')}</div>${o.phone}<br>
-                        ${o.email ? `<div class="label" style="margin-top:10px">${t('UI_EMAIL_LABEL', 'Email')}</div>${o.email}` : ''}
-                    </div>
-                    <div style="text-align:right">
-                        <div class="label">${state.lang === 'ms' ? 'Tarikh' : (state.lang === 'cn' ? '日期' : 'Date')}</div>${today}
-                    </div>
-                </div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>${state.lang === 'ms' ? 'PENERANGAN' : (state.lang === 'cn' ? '项目说明' : 'DESCRIPTION')}</th>
-                            <th style="text-align:right">${state.lang === 'ms' ? 'JUMLAH' : (state.lang === 'cn' ? '金额' : 'AMOUNT')}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>${o.cat}</strong><br><small>${o.seg}</small></td>
-                            <td style="text-align:right">${currency} ${subtotal.toLocaleString()}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="total-box">
-                    <div class="total-row"><span>Subtotal:</span><span>${currency} ${subtotal.toLocaleString()}</span></div>
-                    <div class="total-row"><span>${state.lang === 'ms' ? 'Cukai' : (state.lang === 'cn' ? '税额' : 'Tax')} (${taxRate}%):</span><span>${currency} ${taxAmount.toLocaleString()}</span></div>
-                    <div class="total-row grand-total"><span>${t('UI_TOTAL', 'Total Amount')}:</span><span>${currency} ${total.toLocaleString()}</span></div>
-                </div>
-                <div class="terms">
-                    <strong>${state.lang === 'ms' ? 'Terma & Syarat' : (state.lang === 'cn' ? '条款与条例' : 'Terms & Conditions')}</strong><br>
-                    ${state.lang === 'cn' ? '1. 有效期为30天。<br>2. 服务前需全额付款。<br>3. 如有任何疑问，请联系我们。' : 
-                      state.lang === 'ms' ? '1. Sah selama 30 hari dari tarikh sebut harga.<br>2. Pembayaran penuh diperlukan sebelum perkhidmatan.<br>3. Sila hubungi kami jika ada sebarang pertanyaan.' : 
-                      '1. Valid for 30 days.<br>2. Full payment required before service.<br>3. Contact us for any questions.'}
-                </div>
-                <script>window.onload=function(){window.print();}<\/script>
-            </body>
-            </html>
-        `);
+        const cur = db.cpq.settings.currency;
+        w.document.write(`<html><head><style>body{font-family:sans-serif;padding:30px;color:#333;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border-bottom:1px solid #eee;padding:12px;text-align:left;}.grand{font-size:22px;font-weight:bold;border-top:2px solid #333;display:inline-block;padding-top:10px;width:100%;text-align:right;}</style></head><body><h1>${db.cpq.settings.brand_name}</h1><p><strong>${o.name}</strong><br>${o.phone}</p><table><thead><tr><th>Description</th><th>Identity</th><th>Price</th></tr></thead><tbody>${o.items.map(i => `<tr><td>${i.desc}</td><td>${i.seg}</td><td>${cur}${i.price.toLocaleString()}</td></tr>`).join('')}</tbody></table><div style="text-align:right"><p>Subtotal: ${o.subtotal}</p><p>Tax: ${o.tax}</p><div class="grand">TOTAL: ${o.price}</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`);
         w.document.close();
     }
-
     init();
 </script>
 </body>
