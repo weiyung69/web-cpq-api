@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ms">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,25 +36,26 @@
     <div id="brand" class="brand">--</div>
     <div class="lang-bar" id="langs"></div>
 
-    <div class="section-title" id="t-info">Personal Info</div>
-    <input type="text" id="cust-name" placeholder="Name">
-    <input type="text" id="cust-phone" placeholder="Phone Number">
+    <div class="section-title" id="t-info">Maklumat Peribadi</div>
+    <input type="text" id="cust-name" placeholder="Nama Penuh">
+    <input type="text" id="cust-phone" placeholder="Nombor Telefon">
+    <input type="email" id="cust-email" placeholder="Alamat Emel">
 
-    <div class="section-title" id="t-seg">Identity</div>
+    <div class="section-title" id="t-seg">Kategori</div>
     <div class="grid" id="seg-grid"></div>
 
-    <div class="section-title" id="t-cat">Service Plan</div>
+    <div class="section-title" id="t-cat">Pelan Perkhidmatan</div>
     <div class="grid" id="cat-grid"></div>
 
-    <div class="section-title" id="t-item" style="display:none;">Selection</div>
+    <div class="section-title" id="t-item" style="display:none;">Pilihan</div>
     <div class="grid" id="item-grid"></div>
 
     <div class="footer-price">
-        <div id="t-total">Total Amount</div>
+        <div id="t-total">Jumlah Keseluruhan</div>
         <div class="price-val" id="display-price">--</div>
     </div>
 
-    <button class="submit-btn" id="btn-submit" onclick="doSubmit()" disabled>Generate & Print Quote</button>
+    <button class="submit-btn" id="btn-submit" onclick="doSubmit()" disabled>Jana & Cetak Sebut Harga</button>
 </div>
 
 <script>
@@ -90,32 +91,33 @@
         document.getElementById('t-info').innerText = t('UI_NAME_LABEL');
         document.getElementById('cust-name').placeholder = t('UI_NAME_LABEL');
         document.getElementById('cust-phone').placeholder = t('UI_PHONE_LABEL');
+        document.getElementById('cust-email').placeholder = t('UI_EMAIL_LABEL');
         document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE');
         document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN');
         document.getElementById('t-total').innerText = t('UI_TOTAL');
         document.getElementById('btn-submit').innerText = t('UI_SUBMIT');
 
-        // 1. 渲染身份 (SEG_)
+        // 渲染 Identity
         const segs = new Set();
         Object.values(db.cpq.catalog).forEach(p => p.segments.filter(s=>s.startsWith('SEG_')).forEach(s=>segs.add(s)));
         document.getElementById('seg-grid').innerHTML = Array.from(segs).map(s => `
             <div class="card ${state.seg===s?'active':''}" onclick="select('seg', '${s}')">${t(s)}</div>
         `).join('');
 
-        // 2. 渲染服务 (CAT_)
+        // 渲染 Plan
         const cats = Object.values(db.cpq.catalog).filter(p => !state.seg || p.segments.includes(state.seg));
         document.getElementById('cat-grid').innerHTML = cats.map(p => `
             <div class="card ${state.cat===p.i18n?'active':''}" onclick="select('cat', '${p.i18n}')">${t(p.i18n)}</div>
         `).join('');
 
-        // 3. 渲染具体项 (Price Slots)
+        // 渲染 Item Options
         const itemTitle = document.getElementById('t-item');
         const itemGrid = document.getElementById('item-grid');
         if (state.cat) {
             const prod = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat && p.segments.includes(state.seg));
             if (prod && Object.keys(prod.items).length > 0) {
                 itemTitle.style.display = 'flex';
-                itemTitle.innerText = t('UI_SELECT_OPTION') || "Option";
+                itemTitle.innerText = t('UI_SELECT_OPTION');
                 itemGrid.innerHTML = Object.keys(prod.items).map(k => `
                     <div class="card ${state.item===k?'active':''}" onclick="select('item', '${k}')">${k}</div>
                 `).join('');
@@ -124,7 +126,6 @@
             itemTitle.style.display = 'none';
             itemGrid.innerHTML = '';
         }
-
         calcPrice();
     }
 
@@ -153,11 +154,13 @@
     async function doSubmit() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        if(!name || !phone) return alert("Please fill in Name and Contact");
+        const email = document.getElementById('cust-email').value;
+        if(!name || !phone) return alert("Sila isi Nama dan No Telefon");
 
         const order = {
             name: name,
             phone: phone,
+            email: email,
             seg: t(state.seg), 
             cat: t(state.cat) + " (" + state.item + ")", 
             price: document.getElementById('display-price').innerText,
@@ -167,13 +170,18 @@
 
         printPDF(order);
         await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
-        alert(t('UI_SUCCESS') || "Submitted Successfully!");
+        alert(t('UI_SUCCESS'));
     }
 
     function printPDF(o) {
         const w = window.open('', '_blank');
         const today = new Date().toLocaleDateString();
-        
+        const currency = db.cpq.settings.currency;
+        const taxRate = parseFloat(db.cpq.settings.tax_rate) || 0;
+        const subtotal = parseFloat(o.price.replace(/[^0-9.]/g, ''));
+        const taxAmount = subtotal * (taxRate / 100);
+        const total = subtotal + taxAmount;
+
         w.document.write(`
             <html>
             <head>
@@ -188,41 +196,45 @@
                     th { background: #f4f4f4; text-align: left; padding: 12px; border-bottom: 2px solid #ddd; }
                     td { padding: 12px; border-bottom: 1px solid #eee; }
                     .total-box { text-align: right; margin-top: 20px; }
-                    .total-amount { font-size: 22px; font-weight: bold; border-top: 2px solid #333; display: inline-block; padding-top: 10px; width: 200px; }
+                    .total-row { display: flex; justify-content: flex-end; gap: 30px; margin-bottom: 5px; font-size: 14px; }
+                    .grand-total { font-size: 22px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; margin-top: 10px; }
                     .terms { margin-top: 50px; font-size: 11px; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
                 </style>
             </head>
             <body>
                 <div class="header">
                     <div class="brand">${db.cpq.settings.brand_name}</div>
-                    <div style="color:#666">QUOTATION</div>
+                    <div style="color:#666">QUOTATION / SEBUT HARGA</div>
                 </div>
                 <div class="info">
                     <div>
                         <div class="label">${t('UI_NAME_LABEL')}</div><strong>${o.name}</strong><br>
-                        <div class="label" style="margin-top:10px">${t('UI_PHONE_LABEL')}</div>${o.phone}
+                        <div class="label" style="margin-top:10px">${t('UI_PHONE_LABEL')}</div>${o.phone}<br>
+                        ${o.email ? `<div class="label" style="margin-top:10px">${t('UI_EMAIL_LABEL')}</div>${o.email}` : ''}
                     </div>
                     <div style="text-align:right">
-                        <div class="label">Date</div>${today}
+                        <div class="label">Tarikh</div>${today}
                     </div>
                 </div>
                 <table>
-                    <thead><tr><th>DESCRIPTION</th><th style="text-align:right">AMOUNT</th></tr></thead>
+                    <thead><tr><th>DESCRIPTION / PENERANGAN</th><th style="text-align:right">AMOUNT / HARGA</th></tr></thead>
                     <tbody>
                         <tr>
                             <td><strong>${o.cat}</strong><br><small>${o.seg}</small></td>
-                            <td style="text-align:right">${o.price}</td>
+                            <td style="text-align:right">${currency} ${subtotal.toLocaleString()}</td>
                         </tr>
                     </tbody>
                 </table>
                 <div class="total-box">
-                    <div class="total-amount"><span style="float:left">${t('UI_TOTAL')}</span>${o.price}</div>
+                    <div class="total-row"><span>Subtotal:</span><span>${currency} ${subtotal.toLocaleString()}</span></div>
+                    <div class="total-row"><span>Cukai / Tax (${taxRate}%):</span><span>${currency} ${taxAmount.toLocaleString()}</span></div>
+                    <div class="total-row grand-total"><span>${t('UI_TOTAL')}:</span><span>${currency} ${total.toLocaleString()}</span></div>
                 </div>
                 <div class="terms">
-                    <strong>Terms & Conditions</strong><br>
-                    1. Valid for 30 days.<br>
-                    2. Full payment required before service.<br>
-                    3. Contact us for any questions.
+                    <strong>Terma & Syarat / Terms & Conditions</strong><br>
+                    1. Sah selama 30 hari dari tarikh jana.<br>
+                    2. Pembayaran penuh diperlukan sebelum perkhidmatan dimulakan.<br>
+                    3. Sila hubungi kami untuk sebarang pertanyaan lanjut.
                 </div>
                 <script>window.onload=function(){window.print();}<\/script>
             </body>
