@@ -245,7 +245,7 @@
                     // Contact Links
                     const cleanPhone = o.phone ? o.phone.replace(/\D/g, '') : '';
                     const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent('Hi '+o.name+', following up on your quotation for '+o.price)}`;
-                    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${o.email}&su=Quotation Follow-up&body=Hi ${o.name}, any updates?`;
+                    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${o.email}&su=Quotation Follow-up&body=Hi ${o.name}, following up on your quotation for ${o.price}`;
 
                     return `<tr>
                         <td style="font-size:12px; color:#666;">${o.date.split('T')[0]}<br><small>${o.date.split('T')[1].slice(0,5)}</small></td>

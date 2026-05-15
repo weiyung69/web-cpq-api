@@ -12,6 +12,8 @@
         /* Azure Header */
         .navbar { background: #001728; color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .navbar b { font-size: 18px; letter-spacing: 0.5px; }
+        .lang-btn { background: none; border: 1px solid #fff; color: white; margin-left: 5px; padding: 4px 8px; cursor: pointer; font-size: 11px; }
+        .lang-btn.active { background: var(--azure-blue); border-color: var(--azure-blue); }
 
         .main-layout { max-width: 1200px; margin: 20px auto; display: grid; grid-template-columns: 1fr 380px; gap: 20px; padding: 0 15px; }
         @media (max-width: 950px) { .main-layout { grid-template-columns: 1fr; } }
@@ -32,16 +34,13 @@
 
         input { width: 100%; padding: 10px 12px; border: 1px solid #605e5c; border-radius: 2px; font-size: 15px; margin-bottom: 12px; }
         
-        /* Quantity Selector */
         .qty-row { display: flex; align-items: center; gap: 15px; margin-top: 20px; padding: 15px; background: #f3f2f1; border-radius: 2px; }
         .qty-btn { width: 36px; height: 36px; border: 1px solid #8a8886; background: white; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
-        .qty-btn:active { background: #edebe9; }
         .qty-val { font-size: 18px; font-weight: bold; min-width: 30px; text-align: center; }
 
         .sidebar { background: #f3f2f1; border: 1px solid var(--border); padding: 20px; position: sticky; top: 80px; }
-        .cart-item { background: white; padding: 12px; margin-bottom: 10px; border-left: 4px solid var(--azure-blue); display: flex; justify-content: space-between; align-items: center; }
-        .cart-item b { display: block; font-size: 13px; color: var(--azure-blue); }
-        .remove-btn { color: var(--danger); border: none; background: none; font-size: 18px; cursor: pointer; }
+        .cart-item { background: white; padding: 12px; margin-bottom: 10px; border-left: 4px solid var(--azure-blue); }
+        .remove-btn { color: var(--danger); border: none; background: none; font-size: 20px; cursor: pointer; }
 
         .price-preview { background: #fff8f0; border-left: 4px solid #f2994a; padding: 15px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
         .summary { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px; }
@@ -85,13 +84,13 @@
 
         <div id="price-box" style="display:none; flex-direction: column; gap: 10px;">
             <div class="qty-row">
-                <span id="t-qty" style="font-weight:bold; font-size:12px; flex:1;">QUANTITY:</span>
+                <span style="font-weight:bold; font-size:12px; flex:1;">QUANTITY:</span>
                 <button class="qty-btn" onclick="updateQty(-1)">−</button>
                 <span class="qty-val" id="qty-display">1</span>
                 <button class="qty-btn" onclick="updateQty(1)">+</button>
             </div>
             <div class="price-preview">
-                <span style="font-weight:bold; font-size:12px;" id="lbl-est">ESTIMATED TOTAL:</span>
+                <span style="font-weight:bold; font-size:12px;">ESTIMATED TOTAL:</span>
                 <b id="preview-val" style="font-size:20px;">--</b>
             </div>
         </div>
@@ -137,18 +136,17 @@
 
     function updateUI() {
         document.getElementById('brand-text').innerText = db.cpq.settings.brand_name;
-        document.getElementById('t-info').innerText = t('UI_NAME_LABEL');
-        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN');
-        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE');
-        document.getElementById('t-total-label').innerText = t('UI_TOTAL');
+        document.getElementById('t-info').innerText = t('UI_NAME_LABEL', 'Client Info');
+        document.getElementById('t-cat').innerText = t('UI_SELECT_PLAN', 'Service Plan');
+        document.getElementById('t-seg').innerText = t('UI_SELECT_TYPE', 'Identity');
         
-        // Render CAT & SEG Grids
-        document.getElementById('cat-grid').innerHTML = Object.values(db.cpq.catalog).map(p => `<div class="card ${state.cat===p.i18n?'active':''}" onclick="select('cat', '${p.i18n}')"><span class="card-icon">${ICON_MAP[p.i18n]||'📦'}</span><span class="card-text">${t(p.i18n)}</span></div>`).join('');
+        document.getElementById('cat-grid').innerHTML = Object.values(db.cpq.catalog).sort((a,b)=>a.sort-b.sort).map(p => `<div class="card ${state.cat===p.i18n?'active':''}" onclick="select('cat', '${p.i18n}')"><span class="card-icon">${ICON_MAP[p.i18n]||'📦'}</span><span class="card-text">${t(p.i18n)}</span></div>`).join('');
+        
         const selectedProd = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat);
         const segGrid = document.getElementById('seg-grid');
         if (state.cat && selectedProd) {
             segGrid.innerHTML = selectedProd.segments.filter(s => s.startsWith('SEG_')).map(s => `<div class="card ${state.seg===s?'active':''}" onclick="select('seg', '${s}')"><span class="card-icon">${ICON_MAP[s]||'👤'}</span><span class="card-text">${t(s)}</span></div>`).join('');
-        } else { segGrid.innerHTML = `<div style="grid-column:1/-1; color:#999; font-size:12px; text-align:center;">Select Plan first</div>`; }
+        } else { segGrid.innerHTML = `<div style="grid-column:1/-1; color:#999; text-align:center; padding:10px;">Please Select Plan</div>`; }
 
         const itemSec = document.getElementById('item-section');
         if (state.cat && state.seg && selectedProd) {
@@ -156,7 +154,6 @@
             document.getElementById('item-grid').innerHTML = Object.keys(selectedProd.items).map(k => `<div class="card ${state.item===k?'active':''}" onclick="select('item', '${k}')"><span class="card-icon">⚡</span><span class="card-text">${k}</span></div>`).join('');
         } else { itemSec.style.display = 'none'; }
 
-        // QTY & Price Preview Logic
         const priceBox = document.getElementById('price-box');
         if (state.cat && state.seg && state.item && selectedProd) {
             priceBox.style.display = 'flex';
@@ -183,11 +180,30 @@
     function addToCart() {
         const prod = Object.values(db.cpq.catalog).find(p => p.i18n === state.cat);
         const unitPrice = prod.items[state.item];
-        cart.push({ 
-            id: Date.now(), desc: t(state.cat), opt: state.item, seg: t(state.seg), 
-            unit_price: unitPrice, qty: state.qty, line_total: unitPrice * state.qty 
-        });
-        renderCart();
+        const itemDesc = t(state.cat);
+        const itemOpt = state.item;
+        const itemSeg = t(state.seg);
+
+        // 合并逻辑：检查右边是否已有完全一样的项
+        const existing = cart.find(i => i.desc === itemDesc && i.opt === itemOpt && i.seg === itemSeg);
+        if (existing) {
+            existing.qty += state.qty;
+            existing.line_total = existing.unit_price * existing.qty;
+        } else {
+            cart.push({ id: Date.now(), desc: itemDesc, opt: itemOpt, seg: itemSeg, unit_price: unitPrice, qty: state.qty, line_total: unitPrice * state.qty });
+        }
+        
+        state.qty = 1; document.getElementById('qty-display').innerText = 1; // 重置左边数量
+        renderCart(); updateUI();
+    }
+
+    function updateCartQty(id, delta) {
+        const item = cart.find(i => i.id === id);
+        if (item) {
+            item.qty = Math.max(1, item.qty + delta);
+            item.line_total = item.unit_price * item.qty;
+            renderCart();
+        }
     }
 
     function removeFromCart(id) { cart = cart.filter(i => i.id !== id); renderCart(); }
@@ -197,17 +213,29 @@
         const sumArea = document.getElementById('summary-area');
         const empty = document.getElementById('empty-msg');
         if (cart.length === 0) { list.innerHTML = ""; sumArea.style.display = 'none'; empty.style.display = 'block'; return; }
+        
         empty.style.display = 'none'; sumArea.style.display = 'block';
         const cur = db.cpq.settings.currency;
         list.innerHTML = cart.map(i => `
             <div class="cart-item">
-                <div><b>${i.desc} (${i.opt})</b><small>${i.seg} | ${cur}${i.unit_price} x ${i.qty}</small></div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-weight:bold;">${cur}${i.line_total.toLocaleString()}</span>
-                    <button class="remove-btn" onclick="removeFromCart(${i.id})">×</button>
+                <div style="padding:12px; width:100%;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <b>${i.desc} (${i.opt})</b>
+                        <button class="remove-btn" onclick="removeFromCart(${i.id})">×</button>
+                    </div>
+                    <small>${i.seg}</small>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                        <div style="display:flex; align-items:center; gap:8px; background:#f3f2f1; padding:2px 8px; border-radius:2px;">
+                            <button onclick="updateCartQty(${i.id}, -1)" style="border:none; background:none; cursor:pointer; font-weight:bold;">-</button>
+                            <span style="font-size:13px; font-weight:bold;">${i.qty}</span>
+                            <button onclick="updateCartQty(${i.id}, 1)" style="border:none; background:none; cursor:pointer; font-weight:bold;">+</button>
+                        </div>
+                        <span style="font-weight:bold; color:var(--azure-blue);">${cur}${i.line_total.toLocaleString()}</span>
+                    </div>
                 </div>
             </div>
         `).join('');
+
         const sub = cart.reduce((a, i) => a + i.line_total, 0);
         const taxRate = parseFloat(db.cpq.settings.tax_rate) || 0;
         const taxAmt = sub * (taxRate / 100);
@@ -220,7 +248,7 @@
     async function doSubmit() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        if(!name || !phone || cart.length === 0) return alert("Fill all info.");
+        if(!name || !phone || cart.length === 0) return alert("Please fill Name & Phone.");
         const order = { 
             name, phone, email: document.getElementById('cust-email').value, 
             items: cart.map(i => ({ desc: `${i.desc} (${i.opt})`, seg: i.seg, unit_price: i.unit_price, qty: i.qty, line_total: i.line_total })), 
@@ -229,7 +257,7 @@
         };
         printPDF(order);
         await fetch(`${API}?type=orders`, { method: 'POST', body: JSON.stringify(order) });
-        alert(t('UI_SUCCESS')); cart = []; renderCart(); window.scrollTo(0,0);
+        alert(t('UI_SUCCESS', 'Quotation Saved!')); cart = []; renderCart(); window.scrollTo(0,0);
     }
 
     function printPDF(o) {
@@ -240,33 +268,36 @@
 
         w.document.write(`
             <html><head><style>
-                body{font-family:'Segoe UI',sans-serif;padding:30px;color:#333;}
-                .comp-name{font-size:20px;font-weight:bold;border-bottom:2px solid #333;padding-bottom:10px;}
-                .quo-label{text-align:center;font-size:26px;font-weight:bold;margin:30px 0;}
+                body{font-family:'Segoe UI',sans-serif;padding:40px;color:#333;line-height:1.6;}
+                .comp-name{font-size:22px;font-weight:bold;border-bottom:2px solid #333;padding-bottom:10px;}
+                .quo-label{text-align:center;font-size:28px;font-weight:bold;margin:40px 0;letter-spacing:2px;}
                 .info-grid{width:100%;margin-bottom:30px;border-collapse:collapse;}
                 .items-table{width:100%;border-collapse:collapse;margin-bottom:30px;}
-                .items-table th{border-top:2px solid #333;border-bottom:1px solid #333;padding:12px 10px;text-align:left;background:#f9f9f9;}
-                .items-table td{padding:12px 10px;border-bottom:1px solid #eee;}
-                .summary-area{width:250px;margin-left:auto;}
-                .total-row{font-weight:bold;font-size:20px;border-top:2px solid #333;padding-top:10px;}
+                .items-table th{border-top:2px solid #333;border-bottom:1px solid #333;padding:12px;text-align:left;background:#f9f9f9;font-size:13px;}
+                .items-table td{padding:12px;border-bottom:1px solid #eee;font-size:14px;}
+                .summary-area{width:280px;margin-left:auto;margin-top:20px;}
+                .total-row{font-weight:bold;font-size:22px;border-top:2px solid #333;padding-top:10px;margin-top:10px;}
             </style></head><body>
                 <div class="comp-name">${db.cpq.settings.brand_name}</div>
                 <div class="quo-label">${getT('title')}</div>
                 <table class="info-grid"><tr>
-                    <td><strong>To:</strong><br>${o.name}<br>${o.phone}</td>
-                    <td style="text-align:right"><strong>${getT('date')}:</strong> ${new Date().toLocaleDateString()}</td>
+                    <td><strong>To:</strong><br>${o.name}<br>${o.phone}<br>${o.email||''}</td>
+                    <td style="text-align:right;vertical-align:top;"><strong>${getT('date')}:</strong> ${new Date().toLocaleDateString()}</td>
                 </tr></table>
                 <table class="items-table">
-                    <thead><tr><th>${getT('item')}</th><th>${getT('qty')}</th><th style="text-align:right">${getT('price')}</th></tr></thead>
-                    <tbody>${o.items.map(i => `<tr><td><b>${i.desc}</b><br><small>${i.seg} @ ${cur}${i.unit_price}</small></td><td>${i.qty}</td><td style="text-align:right">${cur}${i.line_total.toLocaleString()}</td></tr>`).join('')}</tbody>
+                    <thead><tr><th>${getT('item')}</th><th style="text-align:center">${getT('qty')}</th><th style="text-align:right">${getT('price')}</th></tr></thead>
+                    <tbody>${o.items.map(i => `<tr><td><b>${i.desc}</b><br><small style="color:#666">${i.seg} @ ${cur}${i.unit_price.toLocaleString()}</small></td><td style="text-align:center">${i.qty}</td><td style="text-align:right">${cur}${i.line_total.toLocaleString()}</td></tr>`).join('')}</tbody>
                 </table>
                 <div class="summary-area">
                     <div style="display:flex;justify-content:space-between;"><span>Subtotal:</span><span>${o.subtotal}</span></div>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span>Tax:</span><span>${o.tax}</span></div>
+                    <div style="display:flex;justify-content:space-between;"><span>Tax:</span><span>${o.tax}</span></div>
                     <div class="total-row" style="display:flex;justify-content:space-between;"><span>TOTAL:</span><span>${o.price}</span></div>
                 </div>
-                <div style="margin-top:50px;font-size:12px;border-top:1px dashed #ccc;padding-top:20px;">
-                    <strong>Terms:</strong><br>1. Valid for 30 days. 2. Full payment required upfront. 3. Non-refundable.
+                <div style="margin-top:60px;font-size:12px;border-top:1px dashed #ccc;padding-top:20px;color:#666;">
+                    <strong>Terms & Conditions:</strong><br>
+                    1. Validity: 30 days from date of issue.<br>
+                    2. Payment: Full payment required upon confirmation.<br>
+                    3. Delivery: Commencement as per agreed schedule.
                 </div>
                 <script>window.onload=function(){setTimeout(()=>window.print(),500);}<\/script>
             </body></html>
