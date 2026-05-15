@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smart Quote System v5.5</title>
+    <title>CPQ</title>
     <style>
         :root { --azure-blue: #0078d4; --bg: #faf9f8; --border: #edebe9; --text: #323130; --danger: #a4262c; --success: #107c10; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -60,7 +60,7 @@
 
 <div class="navbar">
     <div style="display:flex; align-items:center; gap:10px;">
-        <span>☁️</span> <b id="brand-text">Azure Quote System</b>
+        <span>🏢</span> <b id="brand-text">Quote System</b>
     </div>
     <div class="lang-bar" id="langs"></div>
 </div>
@@ -251,7 +251,115 @@
     function printPDF(o) {
         const w = window.open('', '_blank');
         const cur = db.cpq.settings.currency;
-        w.document.write(`<html><head><style>body{font-family:sans-serif;padding:30px;color:#333;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border-bottom:1px solid #eee;padding:12px;text-align:left;}.grand{font-size:22px;font-weight:bold;border-top:2px solid #333;display:inline-block;padding-top:10px;width:100%;text-align:right;}</style></head><body><h1>${db.cpq.settings.brand_name}</h1><p><strong>${o.name}</strong><br>${o.phone}</p><table><thead><tr><th>Description</th><th>Identity</th><th>Price</th></tr></thead><tbody>${o.items.map(i => `<tr><td>${i.desc}</td><td>${i.seg}</td><td>${cur}${i.price.toLocaleString()}</td></tr>`).join('')}</tbody></table><div style="text-align:right"><p>Subtotal: ${o.subtotal}</p><p>Tax: ${o.tax}</p><div class="grand">TOTAL: ${o.price}</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`);
+        const today = new Date().toLocaleDateString();
+
+        // 1. 语言判定逻辑 (PDF UI 跟着前端选的语言走)
+        const trans = {
+            title: { en: 'QUOTATION', cn: '报价单', ms: 'SEBUT HARGA', jp: '御見積書' },
+            date: { en: 'Date', cn: '日期', ms: 'Tarikh', jp: '日付' },
+            item: { en: 'Item Description', cn: '项目描述', ms: 'Deskripsi', jp: '内容' },
+            identity: { en: 'Identity', cn: '身份', ms: 'Identiti', jp: '属性' },
+            price: { en: 'Price', cn: '价格', ms: 'Harga', jp: '金額' }
+        };
+
+        const getT = (key) => (trans[key] && trans[key][state.lang]) ? trans[key][state.lang] : trans[key]['en'];
+
+        w.document.write(`
+            <html>
+            <head>
+                <title>Quotation - ${o.name}</title>
+                <style>
+                    @page { size: A4; margin: 15mm; }
+                    body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.5; padding: 20px; }
+                    
+                    /* 公司名字：左对齐，带下划线 */
+                    .comp-name { font-size: 20px; font-weight: bold; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px; }
+                    
+                    /* Quotation：绝对居中 */
+                    .quo-label { text-align: center; font-size: 26px; font-weight: bold; margin: 30px 0; letter-spacing: 3px; }
+                    
+                    /* 客户信息与日期：左右两边分布 */
+                    .info-grid { width: 100%; margin-bottom: 40px; border-collapse: collapse; }
+                    .info-grid td { vertical-align: top; font-size: 14px; }
+                    
+                    /* 表格样式 */
+                    .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                    .items-table th { border-top: 2px solid #333; border-bottom: 1px solid #333; padding: 12px 10px; text-align: left; background: #fcfcfc; font-size: 13px; }
+                    .items-table td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+                    
+                    /* 价格计算区 */
+                    .summary-area { width: 280px; margin-left: auto; margin-top: 20px; }
+                    .summary-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
+                    .total-row { font-weight: bold; font-size: 20px; border-top: 2px solid #333; margin-top: 10px; padding-top: 10px; }
+
+                    /* T&C：英文 Hardcode */
+                    .tc-section { margin-top: 60px; font-size: 12px; color: #555; border-top: 1px dashed #ccc; padding-top: 20px; }
+                    .tc-title { font-weight: bold; margin-bottom: 8px; text-decoration: underline; color: #000; }
+                </style>
+            </head>
+            <body>
+                <div class="comp-name">${db.cpq.settings.brand_name}</div>
+                
+                <div class="quo-label">${getT('title')}</div>
+
+                <table class="info-grid">
+                    <tr>
+                        <td style="width: 60%;">
+                            <strong style="font-size: 16px;">To:</strong><br>
+                            <span style="font-size: 18px; font-weight: bold;">${o.name}</span><br>
+                            ${o.email ? o.email + '<br>' : ''}
+                            ${o.phone}
+                        </td>
+                        <td style="text-align: right; line-height: 1.8;">
+                            <strong>${getT('date')}:</strong> ${today}<br>
+                            <strong>Ref:</strong> QT-${Date.now().toString().slice(-6)}
+                        </td>
+                    </tr>
+                </table>
+
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>${getT('item')}</th>
+                            <th>${getT('identity')}</th>
+                            <th style="text-align: right;">${getT('price')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${o.items.map(i => `
+                            <tr>
+                                <td><strong>${i.desc}</strong></td>
+                                <td>${i.seg}</td>
+                                <td style="text-align: right;">${cur}${i.price.toLocaleString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <div class="summary-area">
+                    <div class="summary-row"><span>Subtotal:</span><span>${o.subtotal}</span></div>
+                    <div class="summary-row"><span>Tax (${db.cpq.settings.tax_rate}%):</span><span>${o.tax}</span></div>
+                    <div class="summary-row total-row"><span>TOTAL:</span><span>${o.price}</span></div>
+                </div>
+
+                <div class="tc-section">
+                    <div class="tc-title">Terms & Conditions</div>
+                    1. Validity: This quotation is valid for thirty (30) days from the date of issue.<br>
+                    2. Payment: Full payment is required upon confirmation of the service/order.<br>
+                    3. Delivery: Service commencement or goods delivery as per agreed schedule after payment.
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        setTimeout(() => { 
+                            window.print(); 
+                            // window.close(); // 打印完自动关闭预览窗口
+                        }, 500);
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
         w.document.close();
     }
     init();
