@@ -86,19 +86,26 @@
     let orders = [];
 
     async function load() {
-        const t = Date.now();
-        const [r1, r2, r3] = await Promise.all([
-            fetch(`${API_URL}?type=cpq&t=${t}`),
-            fetch(`${API_URL}?type=langs&t=${t}`),
-            fetch(`${API_URL}?type=orders&t=${t}`)
-        ]);
-        cpq = await r1.json(); langs = await r2.json(); orders = await r3.json();
-        document.getElementById('conf-langs').value = cpq.settings.langs.join(',');
-        document.getElementById('conf-currency').value = cpq.settings.currency;
-        document.getElementById('conf-tax').value = cpq.settings.tax_rate;
-        document.getElementById('conf-brand').value = cpq.settings.brand_name;
-        initOrderFilters(); renderLangs();
-    }
+    const t = Date.now();
+    const [r1, r2, r3] = await Promise.all([
+        fetch(`${API_URL}?type=cpq&t=${t}`),
+        fetch(`${API_URL}?type=langs&t=${t}`),
+        fetch(`${API_URL}?type=orders&t=${t}`)
+    ]);
+    cpq = await r1.json(); 
+    langs = await r2.json(); 
+    const rawOrders = await r3.json();
+    
+    // ✨ 核心修复：确保 orders 永远是数组，防止 filter 报错
+    orders = Array.isArray(rawOrders) ? rawOrders : []; 
+
+    document.getElementById('conf-langs').value = cpq.settings.langs.join(',');
+    document.getElementById('conf-currency').value = cpq.settings.currency;
+    document.getElementById('conf-tax').value = cpq.settings.tax_rate;
+    document.getElementById('conf-brand').value = cpq.settings.brand_name;
+    initOrderFilters(); 
+    renderLangs();
+}
 
     function showTab(id) {
         document.querySelectorAll('.panel, .tab-btn').forEach(el => el.classList.remove('active'));
