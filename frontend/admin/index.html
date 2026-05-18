@@ -154,10 +154,13 @@
     function renderCatalog() {
         const container = document.getElementById('catalog-list');
         container.innerHTML = "";
+        
+        // 💡 抓取所有以 SEG_ 开头的标签 (忽略前后空格，忽略大小写)
+        const allSegTags = Object.keys(langs).filter(k => k.trim().toUpperCase().startsWith('SEG_'));
+        
         Object.keys(cpq.catalog).sort((a,b)=>cpq.catalog[a].sort - cpq.catalog[b].sort).forEach(id => {
             const p = cpq.catalog[id];
             const card = document.createElement('div'); card.className = 'prod-card';
-            const allSegTags = Object.keys(langs).filter(k => k.startsWith('SEG_'));
             const activeSegs = p.segments || [];
 
             card.innerHTML = `
@@ -175,7 +178,11 @@
                 <div style="margin-bottom:15px;">
                     <label style="font-size:11px; font-weight:bold; color:#666;">APPLICABLE SEGMENTS (SEG_):</label>
                     <div class="tag-container">
-                        ${allSegTags.map(tag => `<div class="tag ${activeSegs.includes(tag)?'active':''}" onclick="toggleTag('${id}','${tag}')">${tag}</div>`).join('')}
+                        ${allSegTags.length > 0 ? allSegTags.map(tag => `
+                            <div class="tag ${activeSegs.includes(tag)?'active':''}" onclick="toggleTag('${id}','${tag}')">
+                                ${tag}
+                            </div>
+                        `).join('') : '<span style="color:#999;font-size:11px;">No SEG_ keys found in Library</span>'}
                     </div>
                 </div>
 
